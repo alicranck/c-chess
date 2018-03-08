@@ -18,4 +18,8 @@ set(SOURCE_FILES
 
 )
 
+include_directories(${PROJECT_SOURCE_DIR}/include)
+link_directories(${PROJECT_SOURCE_DIR}/lib)
+
 add_executable(SPFinalProject ${SOURCE_FILES})
+target_link_libraries(SPFinalProject mingw32 SDL2main SDL2)

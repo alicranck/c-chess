@@ -2,6 +2,7 @@
 // Created by user on 6/24/2017.
 //
 #include "SPMainAux.h"
+//#include <SDL.h>
 
 int main(){
     //----------------------------------------Setting Mode--------------------------------------------
@@ -75,9 +76,9 @@ int main(){
                 char* player = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? "white" : "black" ;
                 printf("Check: %s king is threatened\n", player) ;
             }
-
         }
     }
     return 0 ;
 }
+#pragma clang diagnostic pop
 

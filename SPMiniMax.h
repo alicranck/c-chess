@@ -1,6 +1,5 @@
 #ifndef SPMINIMAX_H_
 #define SPMINIMAX_H_
-#include "SPMiniMaxNode.h"
 #include "SPCHESSGame.h"
 
 

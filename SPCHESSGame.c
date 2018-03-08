@@ -458,6 +458,7 @@ SP_CHESS_GAME_MESSAGE spChessCheckWinner(SPChessGame* game){
 int getGameScore(SPChessGame* game){
 
     int score = 0 ;
+
     SP_CHESS_GAME_MESSAGE ret = spChessCheckWinner(game) ;
 
     if (ret==SP_CHESS_GAME_CHECKMATE)
