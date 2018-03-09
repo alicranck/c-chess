@@ -2,6 +2,7 @@
 // Created by user on 3/8/2018.
 //
 #include "SPConsoleMain.h"
+#include "SPGUIMainAux.h"
 #include <SDL.h>
 #include <SDL_video.h>
 #include <stdio.h>
@@ -24,13 +25,13 @@ int main(int argc, char** argv){
             return 1;
         }
 
-        // create an SDL window
+        // create main SDL window
         SDL_Window *window = SDL_CreateWindow(
-                "Title",
+                "SPChess",
                 SDL_WINDOWPOS_CENTERED,
                 SDL_WINDOWPOS_CENTERED,
-                600,
-                600,
+                1024,
+                768,
                 SDL_WINDOW_OPENGL);
 
         // make sure window was created successfully
@@ -49,20 +50,10 @@ int main(int argc, char** argv){
             return 0;
         }
 
-        SDL_Rect rect = {.x = 250, .y = 250, .w = 100, .h = 100};
+        // Draw main window
+        drawMainWindow(window, rend) ;
 
-        // clear window to color red (r,g,b,a)
-        SDL_SetRenderDrawColor(rend, 255, 0, 0, 0);
-        SDL_RenderClear(rend);
-
-        // draw a blue rectangle
-        SDL_SetRenderDrawColor(rend, 0, 0, 255, 0);
-        SDL_RenderFillRect(rend, &rect);
-
-        // present changes to user
-        SDL_RenderPresent(rend);
-
-        SDL_Delay(10000);
+        SDL_Delay(1000000000);
 
         // free everything and finish
         SDL_DestroyRenderer(rend);

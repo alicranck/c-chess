@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD 99)
 set(SOURCE_FILES
         SPConsoleMain.c
         SPConsoleMain.h
+        SPGUIMainAux.c
+        SPGUIMainAux.h
         SPArrayList.c
         SPArrayList.h
         SPCHESSGame.c
