@@ -1,84 +1,73 @@
 //
-// Created by user on 6/24/2017.
+// Created by user on 3/8/2018.
 //
-#include "SPMainAux.h"
-//#include <SDL.h>
+#include "SPConsoleMain.h"
+#include <SDL.h>
+#include <SDL_video.h>
+#include <stdio.h>
 
-int main(){
-    //----------------------------------------Setting Mode--------------------------------------------
-    while(true) {
-        bool print_flag = false ;
-        int ret = 0 ;
-        int currentColor ;
-	    SP_CHESS_GAME_MESSAGE result ;
-	    SPCommand *cmd  ;
-        SPChessGame* game = startNewGame(); //Assumes game is no NULL. allocation errors are handled in the function
-        //----------------------------------------Game Loop--------------------------------------------------
-        spChessPrintBoard(game);
-        result = SP_CHESS_GAME_NO_WINNER ;
-        while (result == SP_CHESS_GAME_NO_WINNER) {
-            currentColor = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? 1 : 0 ;
-            if (game->gameMode==2||game->userColor==currentColor) {
-                if (print_flag)
-                    spChessPrintBoard(game);
-                print_flag = false;
-                cmd = getMoveFromUser(
-                        game); //Assumes cmd is not NULL. allocation and IO errors are handled in the function
-                ret = executeUserCommand(cmd, game); //ret options - (1=quit, 2=restart, 3=print status and repeat user turn,
-                // 4=execute computer turn, 5=wait for further commands from user)
-                free(cmd);
-            }
-            if (ret==1){
-		        spChessDestroy(game);
-                quit() ;
-	        }
-            if (ret==2) {
-		        spChessDestroy(game);
-                break;
-            }
-            if (ret==3){
-                print_flag = true ;
-                continue ;
-            }
+int main(int argc, char** argv){
 
-            if (ret==5){
-                print_flag = false ;
-                continue ;
-            }
+    int ret = 0 ;
 
-	        result = spChessCheckWinner(game) ;
-            if (result!=SP_CHESS_GAME_NO_WINNER){
-                finishGame(game, result) ;
-                spChessDestroy(game);
-                quit() ;
-            }
-
-            if (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT){
-                char* player = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? "white" : "black" ;
-                printf("Check: %s king is threatened\n", player) ;
-            }
-
-            ret = executeComputerTurn(game) ;
-            print_flag = true ;
-            if (ret<0){
-                spChessDestroy(game);
-                quit() ;
-	        }
-
-            result = spChessCheckWinner(game) ;
-            if (result!=SP_CHESS_GAME_NO_WINNER){
-                finishGame(game, result) ;
-                spChessDestroy(game);
-                quit() ;
-            }
-
-            if (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT){
-                char* player = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? "white" : "black" ;
-                printf("Check: %s king is threatened\n", player) ;
-            }
-        }
+    // If console mode is chosen, run console mode and return
+    if (argc==1||!strcmp(argv[1], "-c")){
+        ret = consoleMain();
+        return ret ;
     }
-    return 0 ;
-}
-#pragma clang diagnostic pop
 
+    // Else, if GUI mode is selected, run from here
+    if (!strcmp(argv[1], "-g")) {
+        // initialize SDL2 for video
+        if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+            printf("ERROR: unable to init SDL: %s\n", SDL_GetError());
+            return 1;
+        }
+
+        // create an SDL window
+        SDL_Window *window = SDL_CreateWindow(
+                "Title",
+                SDL_WINDOWPOS_CENTERED,
+                SDL_WINDOWPOS_CENTERED,
+                600,
+                600,
+                SDL_WINDOW_OPENGL);
+
+        // make sure window was created successfully
+        if (window == NULL) {
+            printf("ERROR: unable to create window: %s\n", SDL_GetError());
+            SDL_Quit();
+            return 0;
+        }
+
+        // create a renderer for the window
+        SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+        if (rend == NULL) {
+            printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
+            SDL_DestroyWindow(window);
+            SDL_Quit();
+            return 0;
+        }
+
+        SDL_Rect rect = {.x = 250, .y = 250, .w = 100, .h = 100};
+
+        // clear window to color red (r,g,b,a)
+        SDL_SetRenderDrawColor(rend, 255, 0, 0, 0);
+        SDL_RenderClear(rend);
+
+        // draw a blue rectangle
+        SDL_SetRenderDrawColor(rend, 0, 0, 255, 0);
+        SDL_RenderFillRect(rend, &rect);
+
+        // present changes to user
+        SDL_RenderPresent(rend);
+
+        SDL_Delay(10000);
+
+        // free everything and finish
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+    }
+    return ret ;
+}

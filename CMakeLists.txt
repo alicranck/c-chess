@@ -4,7 +4,8 @@ project(SPFinalProject)
 set(CMAKE_CXX_STANDARD 99)
 
 set(SOURCE_FILES
-        main.c
+        SPConsoleMain.c
+        SPConsoleMain.h
         SPArrayList.c
         SPArrayList.h
         SPCHESSGame.c
@@ -15,7 +16,7 @@ set(SOURCE_FILES
         SPMainAux.h
         SPMiniMax.c
         SPMiniMax.h
-
+        main.c
 )
 
 include_directories(${PROJECT_SOURCE_DIR}/include)

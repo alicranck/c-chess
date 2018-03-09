@@ -1,0 +1,11 @@
+//
+// Created by user on 3/8/2018.
+//
+
+#ifndef SPFINALPROJECT_SPCONSOLEMAIN_H_H
+#define SPFINALPROJECT_SPCONSOLEMAIN_H_H
+
+#endif //SPFINALPROJECT_SPCONSOLEMAIN_H_H
+
+
+int consoleMain() ;
