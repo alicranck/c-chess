@@ -5,12 +5,37 @@
 #include "SPGUIMainAux.h"
 
 
-Widget* createButton(SDL_Renderer* rend, char* img, SDL_Rect* location, void (*action)(void)){
-    Button* button = (Button*)malloc(sizeof(Button)) ;
-    if (button==NULL)
-        return NULL ;
+SP_GUI_MESSAGE drawStartWindow(){
 
-    SDL_Surface* surface = SDL_LoadBMP(img) ;
+    SP_GUI_MESSAGE ret = NULL ;
+
+    // create main SDL window
+    SDL_Window *window = SDL_CreateWindow(
+            "SPChess",
+            SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED,
+            450,
+            600,
+            SDL_WINDOW_OPENGL);
+
+    // make sure window was created successfully
+    if (window == NULL) {
+        printf("ERROR: unable to create window: %s\n", SDL_GetError());
+        SDL_Quit();
+        return 0;
+    }
+
+    // create a renderer for the window
+    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (rend == NULL) {
+        printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
+        SDL_DestroyWindow(window);
+        SDL_Quit();
+        return 0;
+    }
+
+    // set background
+    SDL_Surface* surface = SDL_LoadBMP("bmp/start/startBg.bmp") ;
     if (surface==NULL){
         printf("ERROR: unable to load image: %s\n", SDL_GetError());
         return NULL ;
@@ -22,85 +47,56 @@ Widget* createButton(SDL_Renderer* rend, char* img, SDL_Rect* location, void (*a
         return NULL ;
     }
     SDL_FreeSurface(surface) ;
+    SDL_RenderCopy(rend, texture, NULL, NULL);
 
-    button->rend = rend ;
-    button->texture = texture ;
-    button->location = location ;
-    button->action = action ;
+    SDL_Rect newGameRect = { .x = START_SCREEN_BUTTON_X, .y = START_SCREEN_TOP_BUTTON_Y,
+            .w = BUTTON_WIDTH, .h = BUTTON_HEIGHT };
+    Widget* newGameButton = createButton(rend, "bmp/start/newGame.bmp", "bmp/start/newGameHL.bmp",
+                                         "bmp/start/newGameP.bmp", &newGameRect, &newGameAction) ;
+    newGameButton->draw(newGameButton, rend);
 
-    Widget* widget = (Widget*)malloc(sizeof(Widget)) ;
-    if (widget==NULL){
-        printf("ERROR: allocation error\n") ;
-        return NULL ;
-    }
+    SDL_Rect loadRect = { .x = START_SCREEN_BUTTON_X, .y = START_SCREEN_TOP_BUTTON_Y + BUTTON_VERTICAL_DIFF,
+            .w = BUTTON_WIDTH, .h = BUTTON_HEIGHT };
+    Widget* loadButton = createButton(rend, "bmp/start/loadGame.bmp","bmp/start/loadGameHL.bmp",
+                                      "bmp/start/loadGameP.bmp", &loadRect, &loadAction) ;
+    loadButton->draw(loadButton, rend);
 
-    widget->draw = &drawButton ;
-    widget->destroy = &destroyButton ;
-    widget->handleEvent = &handleButtonEvent ;
-    widget->data = button ;
+    SDL_Rect quitRect = { .x = START_SCREEN_BUTTON_X, .y = START_SCREEN_TOP_BUTTON_Y + 2*BUTTON_VERTICAL_DIFF,
+            .w = BUTTON_WIDTH, .h = BUTTON_HEIGHT };
+    Widget* quitButton = createButton(rend, "bmp/start/quit.bmp", "bmp/start/quitHL.bmp",
+                                      "bmp/start/quitP.bmp", &quitRect, &quitAction) ;
+    quitButton->draw(quitButton, rend);
 
-    return widget ;
-}
-
-void destroyButton(Widget* src){
-    Button* button = (Button*)src->data ;
-    SDL_DestroyTexture(button->texture) ;
-    free(button) ;
-    free(src) ;
-}
-
-void handleButtonEvent(Widget* src, SDL_Event* e) {
-    printf("1\n") ;
-    Button* button= (Button*)src->data ;
-    if (e->type==SDL_MOUSEMOTION){
-        int x ;
-        int y ;
-        SDL_GetMouseState(&x, &y) ;
-        if (x>button->location->x&&x<button->location->x+button->location->w
-                &&y>button->location->y&&y<button->location->y+button->location->h)
-            printf("sddd\n") ;
-    }
-    if(e->type==SDL_MOUSEBUTTONDOWN)
-        (*button->action)() ;
-}
-
-void drawButton(Widget* src, SDL_Renderer* rend){
-    Button* button= (Button*)src->data ;
-    SDL_RenderCopy(rend, button->texture, NULL, button->location);
-}
-
-void emptyFunc(){printf("hey111ldsd\n");}
-
-int drawMainWindow(SDL_Window* window, SDL_Renderer* rend){
-
-    // clear window to color red (r,g,b,a)
-    SDL_SetRenderDrawColor(rend, 51, 102, 255, 0);
-    SDL_RenderClear(rend);
-
-    SDL_Rect rect = { .x = 150, .y = 150, .w = 300, .h = 300 };
-    Widget* button = createButton(rend, "icn.bmp", &rect, &emptyFunc) ;
-    button->draw(button, rend);
     while(1){
         SDL_RenderPresent(rend);
         SDL_Event e ;
         SDL_WaitEvent(&e) ;
-        if (e.key.keysym.sym==SDLK_ESCAPE){
+        if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
             break ;
         }
-        (*button->handleEvent)(button, &e) ;
+        ret = (*newGameButton->handleEvent)(newGameButton, &e) ;
+        if (ret!=NULL)
+            break;
+        ret = (*loadButton->handleEvent)(loadButton, &e) ;
+        if (ret!=NULL)
+            break;
+        ret = (*quitButton->handleEvent)(quitButton, &e) ;
+        if (ret!=NULL)
+            break;
     }
-
-    /**
-    for (int i=0; i<8; i++){
-        for (int j=0; j<8;j++){
-            SDL_Rect rect = {.x = 300+75*i, .y = 75+75*j, .w = 75, .h = 75};
-            // draw a blue rectangle
-            SDL_SetRenderDrawColor(rend, 0, 0, 255*((i+j)%2), 0);
-            SDL_RenderFillRect(rend, &rect);
-        }
-    }
-    **/
+    return ret ;
+}
 
 
-    return 0 ;
+
+SP_GUI_MESSAGE newGameAction(){
+    return START_NEW_GAME ;
+}
+
+SP_GUI_MESSAGE loadAction(){
+    return LOAD_GAME ;
+}
+
+SP_GUI_MESSAGE quitAction(){
+    return QUIT ;
 }

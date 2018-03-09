@@ -10,29 +10,28 @@
 #include <SDL.h>
 #include <SDL_video.h>
 #include <stdio.h>
+#include "SPGUITypes.h"
+#include "SPCHESSGame.h"
 
-typedef struct widget_t Widget ;
-struct widget_t{
-    void (*draw)(Widget*, SDL_Renderer*) ;
-    void (*handleEvent)(Widget*, SDL_Event*) ;
-    void (*destroy)(Widget*) ;
-    void* data ;
-};
-
-typedef struct button_t{
-    SDL_Renderer* rend;
-    SDL_Texture* texture ;
-    SDL_Rect* location ;
-    void (*action)(void) ;
-}Button;
+#define BUTTON_WIDTH 200
+#define BUTTON_HEIGHT 40
+#define BUTTON_VERTICAL_DIFF 60
+#define START_SCREEN_TOP_BUTTON_Y 330
+#define START_SCREEN_BUTTON_X 125
 
 
-Widget* createButton(SDL_Renderer* rend, char* img, SDL_Rect* location, void (*action)(void)) ;
 
-void destroyButton(Widget* src) ;
 
-void handleButtonEvent(Widget* src, SDL_Event* e) ;
 
-void drawButton(Widget* src, SDL_Renderer* rend) ;
+
+
+
+SP_GUI_MESSAGE drawStartWindow() ;
+
+SP_GUI_MESSAGE newGameAction() ;
+
+SP_GUI_MESSAGE loadAction() ;
+
+SP_GUI_MESSAGE quitAction() ;
 
 int drawMainWindow(SDL_Window* window, SDL_Renderer* rend);

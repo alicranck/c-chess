@@ -8,6 +8,8 @@ set(SOURCE_FILES
         SPConsoleMain.h
         SPGUIMainAux.c
         SPGUIMainAux.h
+        SPGUITypes.c
+        SPGUITypes.h
         SPArrayList.c
         SPArrayList.h
         SPCHESSGame.c
