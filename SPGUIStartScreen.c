@@ -2,12 +2,12 @@
 // Created by user on 3/9/2018.
 //
 
-#include "SPGUIMainAux.h"
+#include "SPGUIStartScreen.h"
 
 
 SP_GUI_MESSAGE drawStartWindow(){
 
-    SP_GUI_MESSAGE ret = NULL ;
+    SP_GUI_MESSAGE ret = NONE ;
 
     // create main SDL window
     SDL_Window *window = SDL_CreateWindow(
@@ -22,7 +22,7 @@ SP_GUI_MESSAGE drawStartWindow(){
     if (window == NULL) {
         printf("ERROR: unable to create window: %s\n", SDL_GetError());
         SDL_Quit();
-        return 0;
+        return ERROR;
     }
 
     // create a renderer for the window
@@ -31,20 +31,20 @@ SP_GUI_MESSAGE drawStartWindow(){
         printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
         SDL_Quit();
-        return 0;
+        return ERROR;
     }
 
     // set background
     SDL_Surface* surface = SDL_LoadBMP("bmp/start/startBg.bmp") ;
     if (surface==NULL){
         printf("ERROR: unable to load image: %s\n", SDL_GetError());
-        return NULL ;
+        return ERROR ;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
     if (texture==NULL){
         SDL_FreeSurface(surface) ;
         printf("ERROR: unable to create texture from image: %s\n", SDL_GetError());
-        return NULL ;
+        return ERROR ;
     }
     SDL_FreeSurface(surface) ;
     SDL_RenderCopy(rend, texture, NULL, NULL);
@@ -53,18 +53,24 @@ SP_GUI_MESSAGE drawStartWindow(){
             .w = BUTTON_WIDTH, .h = BUTTON_HEIGHT };
     Widget* newGameButton = createButton(rend, "bmp/start/newGame.bmp", "bmp/start/newGameHL.bmp",
                                          "bmp/start/newGameP.bmp", &newGameRect, &newGameAction) ;
+    if (newGameButton==NULL)
+        return ERROR ;
     newGameButton->draw(newGameButton, rend);
 
     SDL_Rect loadRect = { .x = START_SCREEN_BUTTON_X, .y = START_SCREEN_TOP_BUTTON_Y + BUTTON_VERTICAL_DIFF,
             .w = BUTTON_WIDTH, .h = BUTTON_HEIGHT };
     Widget* loadButton = createButton(rend, "bmp/start/loadGame.bmp","bmp/start/loadGameHL.bmp",
                                       "bmp/start/loadGameP.bmp", &loadRect, &loadAction) ;
+    if (loadButton==NULL)
+        return ERROR ;
     loadButton->draw(loadButton, rend);
 
     SDL_Rect quitRect = { .x = START_SCREEN_BUTTON_X, .y = START_SCREEN_TOP_BUTTON_Y + 2*BUTTON_VERTICAL_DIFF,
             .w = BUTTON_WIDTH, .h = BUTTON_HEIGHT };
     Widget* quitButton = createButton(rend, "bmp/start/quit.bmp", "bmp/start/quitHL.bmp",
                                       "bmp/start/quitP.bmp", &quitRect, &quitAction) ;
+    if (quitButton==NULL)
+        return ERROR ;
     quitButton->draw(quitButton, rend);
 
     while(1){
@@ -75,15 +81,24 @@ SP_GUI_MESSAGE drawStartWindow(){
             break ;
         }
         ret = (*newGameButton->handleEvent)(newGameButton, &e) ;
-        if (ret!=NULL)
+        if (ret!=NONE)
             break;
         ret = (*loadButton->handleEvent)(loadButton, &e) ;
-        if (ret!=NULL)
+        if (ret!=NONE)
             break;
         ret = (*quitButton->handleEvent)(quitButton, &e) ;
-        if (ret!=NULL)
+        if (ret!=NONE)
             break;
     }
+    newGameButton->destroy(newGameButton) ;
+    free(newGameButton) ;
+    loadButton->destroy(loadButton) ;
+    free(loadButton);
+    quitButton->destroy(quitButton) ;
+    free(quitButton) ;
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(rend);
+    SDL_DestroyWindow(window);
     return ret ;
 }
 

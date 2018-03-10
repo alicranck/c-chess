@@ -78,8 +78,9 @@ Widget* createButton(SDL_Renderer* rend, char* img, char* highlightImg, char* pr
 void destroyButton(Widget* src){
     Button* button = (Button*)src->data ;
     SDL_DestroyTexture(button->texture) ;
+    SDL_DestroyTexture(button->highlightedTexture) ;
+    SDL_DestroyTexture(button->pressedTexture) ;
     free(button) ;
-    free(src) ;
 }
 
 SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
@@ -110,10 +111,10 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
         if (SDL_PointInRect(&p, button->location)&&button->pressed){
             SDL_RenderCopy(button->rend, button->texture, NULL, button->location);
             button->pressed = false ;
+            return (*button->action)() ;
         }
-        return (*button->action)() ;
     }
-    return NULL ;
+    return NONE ;
 }
 
 void drawButton(Widget* src, SDL_Renderer* rend){

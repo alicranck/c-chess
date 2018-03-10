@@ -2,19 +2,18 @@
 // Created by user on 3/8/2018.
 //
 #include "SPConsoleMain.h"
-#include "SPGUIMainAux.h"
-#include <SDL.h>
-#include <SDL_video.h>
-#include <stdio.h>
+#include "SPGUIStartScreen.h"
+#include "SPGUISettingsScreen.h"
+
+int settings[3] = {1,2,1};
 
 int main(int argc, char** argv){
 
-    int ret = 0 ;
+    SP_GUI_MESSAGE ret ;
 
     // If console mode is chosen, run console mode and return
     if (argc==1||!strcmp(argv[1], "-c")){
-        ret = consoleMain();
-        return ret ;
+        return consoleMain();
     }
 
     // Else, if GUI mode is selected, run from here
@@ -26,10 +25,23 @@ int main(int argc, char** argv){
         }
 
         // Draw start window
-        drawStartWindow() ;
-
+        ret = drawStartWindow() ;
+        while (ret!=QUIT){
+            ret = launchScreen(ret) ;
+        }
         // free everything and finish
         SDL_Quit();
     }
-    return ret ;
+    return 0 ;
+}
+
+
+SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen){
+    switch(screen){
+        case START_NEW_GAME:
+            return drawSettingsWindow(settings) ;
+        case MAIN_MENU:
+            return drawStartWindow() ;
+
+    }
 }

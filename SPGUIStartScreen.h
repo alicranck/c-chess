@@ -34,4 +34,3 @@ SP_GUI_MESSAGE loadAction() ;
 
 SP_GUI_MESSAGE quitAction() ;
 
-int drawMainWindow(SDL_Window* window, SDL_Renderer* rend);

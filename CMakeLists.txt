@@ -6,8 +6,8 @@ set(CMAKE_CXX_STANDARD 99)
 set(SOURCE_FILES
         SPConsoleMain.c
         SPConsoleMain.h
-        SPGUIMainAux.c
-        SPGUIMainAux.h
+        SPGUIStartScreen.c
+        SPGUIStartScreen.h
         SPGUITypes.c
         SPGUITypes.h
         SPArrayList.c
@@ -21,7 +21,7 @@ set(SOURCE_FILES
         SPMiniMax.c
         SPMiniMax.h
         main.c
-)
+        SPGUISettingsScreen.c SPGUISettingsScreen.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${PROJECT_SOURCE_DIR}/lib)

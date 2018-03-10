@@ -2,10 +2,9 @@
 // Created by user on 3/9/2018.
 //
 
-#ifndef SPFINALPROJECT_SPGUIBUTTON_H
-#define SPFINALPROJECT_SPGUIBUTTON_H
+#ifndef SPGUITYPES_H
+#define SPGUITYPES_H
 
-#endif //SPFINALPROJECT_SPGUIBUTTON_H
 
 #include <SDL.h>
 #include <SDL_video.h>
@@ -15,9 +14,21 @@
 typedef enum sp_gui_message_t{
     START_NEW_GAME,
     LOAD_GAME,
-    QUIT
+    MAIN_MENU,
+    START_GAME,
+    MODE_ONE_PLAYER,
+    MODE_TWO_PLAYER,
+    COLOR_WHITE,
+    COLOR_BLACK,
+    LEVEL_AMATEUR,
+    LEVEL_EASY,
+    LEVEL_MODERATE,
+    LEVEL_HARD,
+    LEVEL_EXPERT,
+    QUIT,
+    ERROR,
+    NONE
 }SP_GUI_MESSAGE;
-
 
 typedef struct widget_t Widget ;
 struct widget_t{
@@ -47,3 +58,8 @@ void destroyButton(Widget* src) ;
 SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) ;
 
 void drawButton(Widget* src, SDL_Renderer* rend) ;
+
+SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen) ;
+
+
+#endif //SPGUITYPES_H
