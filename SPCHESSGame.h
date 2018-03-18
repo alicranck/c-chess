@@ -49,7 +49,7 @@ typedef struct sp_chess_move {
 } SPMove ;
 
 typedef struct sp_chess_game_t {
-	char gameBoard[8][8];
+	char gameBoard[SP_CHESS_GAME_N_ROWS][SP_CHESS_GAME_N_COLUMNS];
 	char currentPlayer;
 	int gameMode ;
 	int difficulty ;

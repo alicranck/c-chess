@@ -13,7 +13,7 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
 
     // create main SDL window
     SDL_Window *window = SDL_CreateWindow(
-            "SPChess",
+            "SPChessSettings",
             SDL_WINDOWPOS_CENTERED,
             SDL_WINDOWPOS_CENTERED,
             450,
@@ -259,7 +259,6 @@ void changeSettings(int* settings, SP_GUI_MESSAGE msg){
         default:
             break ;
     }
-    printf("game mode: %d, difficulty: %d, user color: %d\n", settings[0], settings[1], settings[2]) ;
 }
 
 SP_GUI_MESSAGE onePlayerAction(){

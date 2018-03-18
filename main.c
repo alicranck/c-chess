@@ -4,6 +4,7 @@
 #include "SPConsoleMain.h"
 #include "SPGUIStartScreen.h"
 #include "SPGUISettingsScreen.h"
+#include "SPGUIGameScreen.h"
 
 int settings[3] = {1,2,1};
 
@@ -42,6 +43,8 @@ SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen){
             return drawSettingsWindow(settings) ;
         case MAIN_MENU:
             return drawStartWindow() ;
-
+        case START_GAME:
+            printf("start\n") ;
+            drawGameWindow(settings) ;
     }
 }
