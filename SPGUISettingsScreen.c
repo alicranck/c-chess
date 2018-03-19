@@ -77,7 +77,7 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
             if (settings[0]==2&&i!=0){
                 button = (Button*)buttons[i]->data ;
                 button->pressed = true ;
-                button->highlighted = true ;
+                button->hover = true ;
             }
             ret = buttons[i]->handleEvent(buttons[i], &e) ;
             if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)

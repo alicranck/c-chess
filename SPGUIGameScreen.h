@@ -28,6 +28,14 @@ ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* 
 
 void drawBoard(SDL_Renderer* rend, ChessBoard* board) ;
 
+SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e) ;
+
 SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend) ;
 
 SDL_Texture* getPieceTex(char piece) ;
+
+void clearBoard(ChessBoard* board) ;
+
+SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, int row, int col) ;
+
+SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board) ;

@@ -79,59 +79,27 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
         return ERROR ;
     }
 
-    // Draw board with initial pieces
-    drawBoard(rend, board) ;
+    // Event loop
+    while(1){
+        drawBoard(rend, board) ;
+        SDL_RenderPresent(rend);
+        SDL_Event e ;
+        Button* button ;
+        SDL_WaitEvent(&e) ;
+        if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE)
+            break ;
+        ret = handleBoardEvent(board, &e) ;
+        // Add buttons event handling 
+      if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
+          break ;
+    }
 
-    SDL_RenderPresent(rend);
-    while(true){} ;
+    //destroyGUIGame() ;
+    SDL_DestroyTexture(texture);
+    SDL_DestroyRenderer(rend);
+    SDL_DestroyWindow(window);
 
-    /**
-      // Draw buttons
-      for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
-          if (buttons[i]==NULL) {
-              printf("ERROR\n") ;
-              return ERROR;
-          }
-          buttons[i]->draw(buttons[i], rend) ;
-      }
-
-      // Event loop
-      while(1){
-          SDL_RenderPresent(rend);
-          SDL_Event e ;
-          Button* button ;
-          SDL_WaitEvent(&e) ;
-          if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
-              break ;
-          }
-          for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
-              // Disable settings in 2-player mode
-              if (settings[0]==2&&i!=0){
-                  button = (Button*)buttons[i]->data ;
-                  button->pressed = true ;
-                  button->highlighted = true ;
-              }
-              ret = buttons[i]->handleEvent(buttons[i], &e) ;
-              if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
-                  break ;
-              if (ret!=NONE)
-                  changeSettings(settings, ret) ;
-          }
-          if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
-              break ;
-      }
-
-      // Destroy buttons
-
-      for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
-          buttons[i]->destroy(buttons[i]) ;
-          free(buttons[i]) ;
-      }
-      SDL_DestroyTexture(texture);
-      SDL_DestroyRenderer(rend);
-      SDL_DestroyWindow(window);
-      **/
-    return ret ;
+return ret ;
 }
 
 
@@ -140,7 +108,8 @@ ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* 
     
     ChessBoard* board = (ChessBoard*)malloc(sizeof(ChessBoard)) ;
     SPChessGame* game = spChessCreate(settings) ;
-    if (board==NULL||game==NULL)
+    SDL_Rect* location = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (board==NULL||game==NULL||location==NULL)
         return NULL ;
     
     for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
@@ -161,8 +130,15 @@ ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* 
 
         }
     }
-
+    
+    location->x = BOARD_X ;
+    location->y = BOARD_Y ;
+    location->h = SQUARE_SIDE*SP_CHESS_GAME_N_ROWS ;
+    location->w = SQUARE_SIDE*SP_CHESS_GAME_N_COLUMNS ;
+    
+    board->location = location ;
     board->game = game ;
+    board->pressed = false ;
 
     return board ;
 }
@@ -208,7 +184,6 @@ SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend){
         rect->y = PIECE_HEIGHT*(i/6) ;
         rect->h = PIECE_HEIGHT ;
         rect->w = PIECE_WIDTH ;
-        printf("piece coordinates are: x=%d, y=%d\n", rect->x, rect->y) ;
         pieces[i] = SDL_CreateTexture(rend,SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, SQUARE_SIDE, SQUARE_SIDE) ;
         SDL_SetTextureBlendMode(pieces[i], SDL_BLENDMODE_BLEND);
         if (pieces[i] == NULL) {
@@ -263,3 +238,123 @@ SDL_Texture* getPieceTex(char piece){
     return pieces[index] ;
 }
 
+
+
+SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
+    // Check if the event is mouse event, and if it's in the board
+    if (e->type!=SDL_MOUSEMOTION&&e->type!=SDL_MOUSEBUTTONDOWN&&e->type!=SDL_MOUSEBUTTONUP)
+        return NONE ;
+
+    SP_GUI_MESSAGE ret ;
+    SDL_Point p = {0, 0};
+    SDL_GetMouseState(&p.x, &p.y) ;
+    int squareCol = (p.x - BOARD_X)/SQUARE_SIDE ;
+    int squareRow = (p.y - BOARD_Y)/SQUARE_SIDE ;
+
+    ChessSquare* square ;
+    if (e->type==SDL_MOUSEMOTION){
+        for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
+            for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++) {
+                square = (ChessSquare*)board->squares[i][j]->data ;
+                if (SDL_PointInRect(&p, square->location)&&!square->hover&&square->piece!=NULL){
+                    square->hover = true ;
+                }
+                if (!SDL_PointInRect(&p, square->location)&&square->hover){
+                    square->hover = false ;
+                }
+            }
+        }
+    }
+
+    if(e->type==SDL_MOUSEBUTTONUP){
+        // if click is out of board clear highlighted buttons and return
+        if (!SDL_PointInRect(&p, board->location)){
+            clearBoard(board) ;
+            return NONE ;
+        }
+        square = (ChessSquare*)board->squares[squareRow][squareCol]->data ;
+
+        // if click is on highlighted square(possible move), execute the move
+        if (board->pressed&&square->highlighted){
+            ret = executeGUIMove(board, squareRow, squareCol) ;
+            clearBoard(board) ;
+            return ret ;
+        }
+
+        clearBoard(board) ;
+        board->pressed = true ;
+        board->pressedLocation[0] = squareRow ;
+        board->pressedLocation[1] = squareCol ;
+        ret = colorPossibleMoves(board) ;
+        return ret ;
+    }
+
+    return NONE ;
+}
+
+
+void clearBoard(ChessBoard* board){
+    ChessSquare* square ;
+    for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
+        for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++) {
+            square = (ChessSquare*)board->squares[i][j]->data ;
+            square->pressed = false ;
+            square->highlighted = false ;
+            square->threatend = false ;
+            square->capture = false ;
+        }
+    }
+    board->pressed = false ;
+}
+
+
+SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, int row, int col){
+    SPMove* move = (SPMove*)malloc(sizeof(SPMove)) ;
+    if (move==NULL)
+        return ERROR ;
+
+    ChessSquare* dest = (ChessSquare*)board->squares[row][col]->data ;
+    ChessSquare* src = (ChessSquare*)board->squares[board->pressedLocation[0]][board->pressedLocation[1]]->data ;
+
+    move->sourceRow = board->pressedLocation[0] ;
+    move->sourceColumn = board->pressedLocation[1] ;
+    move->destRow = row ;
+    move->destColumn = col ;
+
+    executeMove(board->game, move) ;
+
+    // move piece texture from source to dest square
+    dest->piece = src->piece ;
+    src->piece = NULL ;
+
+    return NONE ;
+}
+
+
+SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board){
+
+    SPArrayList* moves = spChessGetMoves(board->game, board->pressedLocation[0], board->pressedLocation[1]) ;
+    printf("pressed location is <%d,%d>\n", board->pressedLocation[0], board->pressedLocation[1]) ;
+    if (moves==NULL)
+        return ERROR ;
+
+    SPMove* move ;
+    ChessSquare* square ;
+
+    for (int i=0;i<moves->actualSize; i++){
+
+
+        move = spArrayListGetAt(moves, i) ;
+        printf("possible move is %c in <%d,%d> to <%d,%d>\n", board->game->gameBoard[board->pressedLocation[0]][board->pressedLocation[1]],
+               board->pressedLocation[0], board->pressedLocation[1], move->destRow, move->destColumn) ;
+        square = (ChessSquare*)board->squares[move->destRow][move->destColumn]->data ;
+        square->highlighted = true ;
+        if (square->texture!=NULL)
+            square->capture = true ;
+        if (spChessIsThreatend(board->game, move->destRow, move->destColumn, board->game->currentPlayer)==
+                SP_CHESS_GAME_UNDER_THREAT)
+            square->threatend = true ;
+    }
+
+    return NONE ;
+}

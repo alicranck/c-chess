@@ -58,7 +58,7 @@ Widget* createButton(SDL_Renderer* rend, char* img, char* highlightImg, char* pr
     button->pressedTexture = Ptexture ;
     button->location = location ;
     button->action = action ;
-    button->highlighted = false ;
+    button->hover = false ;
     button->pressed = false ;
 
     Widget* widget = (Widget*)malloc(sizeof(Widget)) ;
@@ -89,13 +89,13 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
     if (e->type==SDL_MOUSEMOTION){
         SDL_Point p = {0, 0};
         SDL_GetMouseState(&p.x, &p.y) ;
-        if (SDL_PointInRect(&p, button->location)&&!button->highlighted){
+        if (SDL_PointInRect(&p, button->location)&&!button->hover){
             SDL_RenderCopy(button->rend, button->highlightedTexture, NULL, button->location);
-            button->highlighted = true ;
+            button->hover = true ;
         }
-        if (!SDL_PointInRect(&p, button->location)&&button->highlighted){
+        if (!SDL_PointInRect(&p, button->location)&&button->hover){
             SDL_RenderCopy(button->rend, button->texture, NULL, button->location);
-            button->highlighted = false ;
+            button->hover = false ;
         }
     }
     if(e->type==SDL_MOUSEBUTTONDOWN){
@@ -148,10 +148,11 @@ Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL
 
     square->texture = texture ;
     square->location = location ;
-    square->highlighted = false ;
+    square->hover = false ;
     square->pressed = false ;
     square->capture = false ;
     square->threatend = false ;
+    square->highlighted = false ;
     square->piece = piece ;
 
     Widget* widget = (Widget*)malloc(sizeof(Widget)) ;
@@ -181,6 +182,16 @@ SP_GUI_MESSAGE handleChessSquareEvent(Widget* src, SDL_Event* e) {
 
 void drawChessSquare(Widget* src, SDL_Renderer* rend){
     ChessSquare* square = (ChessSquare*)src->data ;
+    SDL_SetTextureColorMod(square->texture, 255, 255, 255);
+    if (square->hover)
+        SDL_SetTextureColorMod(square->texture, 100, 100, 100);
+    if (square->highlighted)
+        SDL_SetTextureColorMod(square->texture, 100, 255, 100);
+    if (square->capture)
+        SDL_SetTextureColorMod(square->texture, 100, 100, 255);
+    if (square->threatend)
+        SDL_SetTextureColorMod(square->texture, 255, 50, 50);
+
     SDL_RenderCopy(rend, square->texture, NULL, square->location);
     SDL_RenderCopy(rend, square->piece, NULL, square->location);
 }

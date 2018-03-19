@@ -44,7 +44,7 @@ typedef struct button_t{
     SDL_Texture* highlightedTexture ;
     SDL_Texture* pressedTexture ;
     SDL_Rect* location ;
-    bool highlighted ;
+    bool hover ;
     bool pressed ;
     SP_GUI_MESSAGE (*action)(void) ;
 }Button;
@@ -54,6 +54,7 @@ typedef struct chess_square_t{
     SDL_Texture* piece ;
     SDL_Texture* texture ;
     SDL_Rect* location ;
+    bool hover ;
     bool highlighted ;
     bool pressed ;
     bool threatend ;
@@ -64,6 +65,9 @@ typedef struct chess_square_t{
 typedef struct chess_board_t{
     Widget* squares[SP_CHESS_GAME_N_ROWS][SP_CHESS_GAME_N_COLUMNS] ;
     SPChessGame* game ;
+    SDL_Rect* location ;
+    bool pressed ;
+    int pressedLocation[2] ;
 }ChessBoard;
 
 
