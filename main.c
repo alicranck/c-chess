@@ -44,7 +44,15 @@ SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen){
         case MAIN_MENU:
             return drawStartWindow() ;
         case START_GAME:
-            printf("start\n") ;
             drawGameWindow(settings) ;
+        case ERROR:
+            //displayError() ;
+            return drawStartWindow() ;
+
     }
+}
+
+
+void displayError(){
+
 }

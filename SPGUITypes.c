@@ -183,7 +183,7 @@ SP_GUI_MESSAGE handleChessSquareEvent(Widget* src, SDL_Event* e) {
 void drawChessSquare(Widget* src, SDL_Renderer* rend){
     ChessSquare* square = (ChessSquare*)src->data ;
     SDL_SetTextureColorMod(square->texture, 255, 255, 255);
-    if (square->hover)
+    if (square->hover||square->pressed)
         SDL_SetTextureColorMod(square->texture, 100, 100, 100);
     if (square->highlighted)
         SDL_SetTextureColorMod(square->texture, 0, 255, 0);

@@ -14,6 +14,7 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
 
     SP_GUI_MESSAGE ret ;
     ChessBoard* board ;
+    Widget** buttons ;
 
     // create main SDL window
     SDL_Window *window = SDL_CreateWindow(
@@ -66,19 +67,41 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
     ret = createPieceTextures("bmp/game/pieces.bmp", rend) ;
     if (ret!=NONE){
         printf("ERROR: unable to create piece textures: %s\n", SDL_GetError());
+        SDL_DestroyTexture(texture);
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(window);
         return ERROR ;
+    }
+
+    // Create buttons
+    buttons = createGameButtons(rend) ;
+    if (buttons==NULL){
+        destroyPieceTextures() ;
+        SDL_DestroyTexture(texture);
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
+        printf("ERROR: unable to create buttons: %s\n", SDL_GetError());
+        return ERROR ;
+    }
+
+    // Draw buttons
+    for (int i=0; i<GAME_NUM_BUTTONS; i++){
+        buttons[i]->draw(buttons[i], rend) ;
     }
 
     // Create board
     board = createGUIChessGame(rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", settings) ;
     if (board==NULL){
         printf("ERROR: unable to create board: %s\n", SDL_GetError());
+        destroyPieceTextures() ;
+        destroyButtons(buttons) ;
+        SDL_DestroyTexture(texture);
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(window);
         return ERROR ;
     }
+
+
 
     // Event loop
     while(1){
@@ -88,10 +111,25 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
         SDL_Event e ;
         Button* button ;
         SDL_WaitEvent(&e) ;
-        if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE)
+        if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
+            ret = QUIT ;
             break ;
+        }
         ret = handleBoardEvent(board, &e) ;
-        // Add buttons event handling 
+        // Add buttons event handling
+        for (int i=0; i<GAME_NUM_BUTTONS; i++){
+            ret = buttons[i]->handleEvent(buttons[i], &e) ;
+            if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME)
+                break ;
+            /**
+            if (ret==SAVE_GAME)
+                saveGame(board) ;
+            if (ret==LOAD_GAME)
+                loadGame() ;
+            if (ret==UNDO_MOVE)
+                undoMove(board) ;
+                **/
+        }
         if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
             break ;
 
@@ -110,7 +148,9 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
         }
     }
 
-    //destroyGUIGame() ;
+    destroyGUIGame(board) ;
+    destroyPieceTextures() ;
+    destroyButtons(buttons) ;
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(window);
@@ -157,6 +197,87 @@ ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* 
     board->pressed = false ;
 
     return board ;
+}
+
+
+Widget** createGameButtons(SDL_Renderer* rend){
+    Widget** buttons = (Widget**)malloc(sizeof(Widget*)*GAME_NUM_BUTTONS) ;
+    if (buttons==NULL)
+        return NULL ;
+
+    // Undo button
+    SDL_Rect* undoRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (undoRect==NULL)
+        return NULL ;
+    undoRect->x = GAME_X ;
+    undoRect->y = UNDO_Y ;
+    undoRect->w = GAME_BUTTON_WIDTH ;
+    undoRect->h = GAME_BUTTON_HEIGHT ;
+    buttons[0] = createButton(rend, "bmp/game/undo.bmp", "bmp/game/undoHL.bmp",
+                              "bmp/game/undoP.bmp", undoRect, &undoAction) ;
+
+    // Save button
+    SDL_Rect* saveRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (saveRect==NULL)
+        return NULL ;
+    saveRect->x = GAME_X ;
+    saveRect->y = GAME_Y ;
+    saveRect->w = GAME_BUTTON_WIDTH ;
+    saveRect->h = GAME_BUTTON_HEIGHT ;
+    buttons[1] = createButton(rend, "bmp/game/save.bmp","bmp/game/saveHL.bmp",
+                              "bmp/game/saveP.bmp", saveRect, &saveAction) ;
+
+    // Load button
+    SDL_Rect* loadRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (loadRect==NULL)
+        return NULL ;
+    loadRect->x = GAME_X ;
+    loadRect->y = GAME_Y + GAME_VERTICAL_DIFF ;
+    loadRect->w = GAME_BUTTON_WIDTH ;
+    loadRect->h = GAME_BUTTON_HEIGHT ;
+    buttons[2] = createButton(rend, "bmp/game/loadGame.bmp","bmp/game/loadGameHL.bmp",
+                              "bmp/game/loadGameP.bmp", loadRect, &gameLoadAction) ;
+
+    // restart button
+    SDL_Rect* restartRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (restartRect==NULL)
+        return NULL ;
+    restartRect->x = GAME_X ;
+    restartRect->y = GAME_Y + 2*GAME_VERTICAL_DIFF ;
+    restartRect->w = GAME_BUTTON_WIDTH ;
+    restartRect->h = GAME_BUTTON_HEIGHT ;
+    buttons[3] = createButton(rend, "bmp/game/restart.bmp","bmp/game/restartHL.bmp",
+                              "bmp/game/restartP.bmp", restartRect, &restartAction) ;
+
+    // Main menu button
+    SDL_Rect* mainRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (mainRect==NULL)
+        return NULL ;
+    mainRect->x = GAME_X ;
+    mainRect->y = GAME_Y + 3*GAME_VERTICAL_DIFF ;
+    mainRect->w = GAME_BUTTON_WIDTH ;
+    mainRect->h = GAME_BUTTON_HEIGHT ;
+    buttons[4] = createButton(rend, "bmp/game/main.bmp","bmp/game/mainHL.bmp",
+                              "bmp/game/mainP.bmp", mainRect, &mainAction) ;
+    
+    // quit button
+    SDL_Rect* quitRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (quitRect==NULL)
+        return NULL ;
+    quitRect->x = GAME_X ;
+    quitRect->y = GAME_Y + 4*GAME_VERTICAL_DIFF ;
+    quitRect->w = GAME_BUTTON_WIDTH ;
+    quitRect->h = GAME_BUTTON_HEIGHT ;
+    buttons[5] = createButton(rend, "bmp/game/quit.bmp","bmp/game/quitHL.bmp",
+                              "bmp/game/quitP.bmp", quitRect, &gameQuitAction) ;
+
+    // Check that all buttons were created successfully
+    for (int i=0;i<GAME_NUM_BUTTONS;i++){
+        if (buttons[i]==NULL)
+            return NULL ;
+    }
+
+    return buttons ;
 }
 
 
@@ -268,6 +389,8 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
     int squareRow = (p.y - BOARD_Y)/SQUARE_SIDE ;
 
     ChessSquare* square ;
+    char piece ;
+
     if (e->type==SDL_MOUSEMOTION){
         for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
             for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++) {
@@ -282,16 +405,22 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
         }
     }
 
+    if (e->type==SDL_MOUSEBUTTONDOWN&&e->button.button==SDL_BUTTON_RIGHT){
+        ret = colorPossibleMoves(board, squareRow, squareCol) ;
+        return ret ;
+    }
+
     if(e->type==SDL_MOUSEBUTTONUP){
         // if click is out of board clear highlighted buttons and return
-        if (!SDL_PointInRect(&p, board->location)){
+        if (!SDL_PointInRect(&p, board->location)||e->button.button==SDL_BUTTON_RIGHT){
             clearBoard(board) ;
             return NONE ;
         }
         square = (ChessSquare*)board->squares[squareRow][squareCol]->data ;
+        piece = board->game->gameBoard[7-squareRow][squareCol] ;
 
-        // if click is on highlighted square(possible move), execute the move
-        if (board->pressed&&square->highlighted){
+        // if there is a chosen square on the board, try executing the move
+        if (board->pressed){
             SPMove* move = (SPMove*)malloc(sizeof(SPMove)) ;
             if (move==NULL)
                 return ERROR ;
@@ -299,18 +428,20 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
             move->sourceColumn = board->pressedLocation[1] ;
             move->destRow = 7 - squareRow ;
             move->destColumn = squareCol ;
-            executeGUIMove(board, move) ;
-            clearBoard(board) ;
-            free(move) ;
-            return NONE ;
+            if(executeGUIMove(board, move)==NONE){
+                clearBoard(board) ;
+                free(move) ;
+                return NONE ;
+            }
         }
 
         clearBoard(board) ;
-        board->pressed = true ;
-        board->pressedLocation[0] = squareRow ;
-        board->pressedLocation[1] = squareCol ;
-        ret = colorPossibleMoves(board) ;
-        return ret ;
+        if (piece!=SP_CHESS_GAME_EMPTY_ENTRY){
+            board->pressed = true ;
+            board->pressedLocation[0] = squareRow ;
+            board->pressedLocation[1] = squareCol ;
+            square->pressed = true ;
+        }
     }
     return NONE ;
 }
@@ -331,7 +462,10 @@ void clearBoard(ChessBoard* board){
 }
 
 
-void executeGUIMove(ChessBoard* board, SPMove* move){
+SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
+
+    if (spChessCheckLegalMove(board->game, move)!=SP_CHESS_GAME_LEGAL_MOVE)
+        return ERROR ;
 
     ChessSquare* dest = (ChessSquare*)board->squares[7-move->destRow][move->destColumn]->data ;
     ChessSquare* src = (ChessSquare*)board->squares[7-move->sourceRow][move->sourceColumn]->data ;
@@ -341,17 +475,19 @@ void executeGUIMove(ChessBoard* board, SPMove* move){
     // move piece texture from source to dest square
     dest->piece = src->piece ;
     src->piece = NULL ;
+
+    return NONE ;
 }
 
 
-SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board){
+SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col){
 
-    SPArrayList* moves = spChessGetMoves(board->game, 7 - board->pressedLocation[0], board->pressedLocation[1]) ;
+    SPArrayList* moves = spChessGetMoves(board->game, 7 - row, col) ;
     if (moves==NULL)
         return ERROR ;
 
     // check if the piece belongs to the current player
-    char piece = board->game->gameBoard[7-board->pressedLocation[0]][board->pressedLocation[1]] ;
+    char piece = board->game->gameBoard[7-row][col] ;
     char player = board->game->currentPlayer ;
     if ((board->game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&isupper(piece))||
             (board->game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&islower(piece)))
@@ -376,4 +512,58 @@ SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board){
     }
 
     return NONE ;
+}
+
+
+void destroyGUIGame(ChessBoard* board){
+
+    for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++) {
+        for (int j = 0; j < SP_CHESS_GAME_N_COLUMNS; j++) {
+            board->squares[i][j]->destroy(board->squares[i][j]) ;
+            free(board->squares[i][j]) ;
+        }
+    }
+    spChessDestroy(board->game) ;
+    free(board->location) ;
+    free(board) ;
+}
+
+
+void destroyPieceTextures(){
+    for (int i=0;i<12;i++){
+        SDL_DestroyTexture(pieces[i]) ;
+    }
+}
+
+
+void destroyButtons(Widget** buttons){
+    for (int i=0; i<GAME_NUM_BUTTONS; i++){
+        buttons[i]->destroy(buttons[i]) ;
+        free(buttons[i]) ;
+    }
+}
+
+
+SP_GUI_MESSAGE undoAction(){
+    return UNDO_MOVE ;
+}
+
+SP_GUI_MESSAGE saveAction(){
+    return SAVE_GAME ;
+}
+
+SP_GUI_MESSAGE gameLoadAction(){
+    return LOAD_GAME ;
+}
+
+SP_GUI_MESSAGE restartAction(){
+    return START_NEW_GAME ;
+}
+
+SP_GUI_MESSAGE mainAction(){
+    return MAIN_MENU ;
+}
+
+SP_GUI_MESSAGE gameQuitAction(){
+    return QUIT ;
 }

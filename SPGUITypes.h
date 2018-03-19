@@ -13,6 +13,7 @@
 
 typedef enum sp_gui_message_t{
     START_NEW_GAME,
+    SAVE_GAME,
     LOAD_GAME,
     MAIN_MENU,
     START_GAME,
@@ -25,6 +26,7 @@ typedef enum sp_gui_message_t{
     LEVEL_MODERATE,
     LEVEL_HARD,
     LEVEL_EXPERT,
+    UNDO_MOVE,
     QUIT,
     ERROR,
     NONE

@@ -21,10 +21,22 @@
 
 #define SQUARE_SIDE 75
 
+#define UNDO_Y 50
+#define GAME_X 100
+#define GAME_Y 315
+
+#define GAME_BUTTON_WIDTH 200
+#define GAME_BUTTON_HEIGHT 50
+#define GAME_VERTICAL_DIFF 70
+
+#define GAME_NUM_BUTTONS 6
+
 
 SP_GUI_MESSAGE drawGameWindow(int* settings) ;
 
 ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, int* settings) ;
+
+Widget** createGameButtons(SDL_Renderer* rend) ;
 
 void drawBoard(SDL_Renderer* rend, ChessBoard* board) ;
 
@@ -36,6 +48,24 @@ SDL_Texture* getPieceTex(char piece) ;
 
 void clearBoard(ChessBoard* board) ;
 
-void executeGUIMove(ChessBoard* board, SPMove* move) ;
+SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move) ;
 
-SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board) ;
+SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col) ;
+
+void destroyGUIGame(ChessBoard* board);
+
+void destroyPieceTextures();
+
+void destroyButtons(Widget** buttons);
+
+SP_GUI_MESSAGE undoAction();
+
+SP_GUI_MESSAGE saveAction();
+
+SP_GUI_MESSAGE gameLoadAction();
+
+SP_GUI_MESSAGE restartAction();
+
+SP_GUI_MESSAGE mainAction();
+
+SP_GUI_MESSAGE gameQuitAction();

@@ -23,7 +23,6 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
     // make sure window was created successfully
     if (window == NULL) {
         printf("ERROR: unable to create window: %s\n", SDL_GetError());
-        SDL_Quit();
         return ERROR;
     }
 
@@ -32,7 +31,6 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
     if (rend == NULL) {
         printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
-        SDL_Quit();
         return ERROR;
     }
 
@@ -40,11 +38,15 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
     SDL_Surface* surface = SDL_LoadBMP("bmp/start/startBg.bmp") ;
     if (surface==NULL){
         printf("ERROR: unable to load image: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
         return ERROR ;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
     if (texture==NULL){
         SDL_FreeSurface(surface) ;
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
         printf("ERROR: unable to create texture from image: %s\n", SDL_GetError());
         return ERROR ;
     }
@@ -53,13 +55,16 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
 
     // Create buttons
     buttons = createSettingsButtons(rend) ;
+    if (buttons==NULL){
+        SDL_DestroyTexture(texture);
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
+        printf("ERROR: unable to create buttons: %s\n", SDL_GetError());
+        return ERROR ;
+    }
 
     // Draw buttons
     for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
-        if (buttons[i]==NULL) {
-            printf("ERROR\n") ;
-            return ERROR;
-        }
         buttons[i]->draw(buttons[i], rend) ;
     }
 
@@ -107,6 +112,8 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
 Widget** createSettingsButtons(SDL_Renderer* rend){
 
     Widget** buttons = (Widget**)malloc(sizeof(Widget*)*SETTINGS_NUM_BUTTONS) ;
+    if (buttons==NULL)
+        return NULL ;
     
     // Game mode buttons
     SDL_Rect* onePlayerRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
@@ -221,6 +228,12 @@ Widget** createSettingsButtons(SDL_Renderer* rend){
     startRect->h = SETTINGS_BUTTON_HEIGHT ;
     buttons[10] = createButton(rend, "bmp/settings/start.bmp","bmp/settings/startHL.bmp",
                               "bmp/settings/startP.bmp", startRect, &startAction) ;
+
+    // Check that all buttons were created succesfuly
+    for (int i=0;i<SETTINGS_NUM_BUTTONS;i++){
+        if (buttons[i]==NULL)
+            return NULL ;
+    }
     
     return buttons ;
 }
