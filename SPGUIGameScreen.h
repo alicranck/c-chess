@@ -36,6 +36,6 @@ SDL_Texture* getPieceTex(char piece) ;
 
 void clearBoard(ChessBoard* board) ;
 
-SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, int row, int col) ;
+void executeGUIMove(ChessBoard* board, SPMove* move) ;
 
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board) ;

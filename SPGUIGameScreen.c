@@ -4,6 +4,7 @@
 
 #include <ctype.h>
 #include "SPGUIGameScreen.h"
+#include "SPMiniMax.h"
 
 
 SDL_Texture* pieces[12] ;
@@ -83,6 +84,7 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
     while(1){
         drawBoard(rend, board) ;
         SDL_RenderPresent(rend);
+
         SDL_Event e ;
         Button* button ;
         SDL_WaitEvent(&e) ;
@@ -90,8 +92,22 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
             break ;
         ret = handleBoardEvent(board, &e) ;
         // Add buttons event handling 
-      if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
-          break ;
+        if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
+            break ;
+
+        drawBoard(rend, board) ;
+        SDL_RenderPresent(rend);
+
+        // Check for computer turn and execute it
+        if ((board->game->gameMode==1)&&((board->game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&board->game->userColor==0)||
+                                         (board->game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&board->game->userColor==1))){
+            int maxDepth = board->game->difficulty ;
+            SPMove* move = spMinimaxSuggestMove(board->game, maxDepth) ;
+            if (move==NULL)
+                return ERROR ;
+            executeGUIMove(board, move) ;
+            continue ;
+        }
     }
 
     //destroyGUIGame() ;
@@ -99,7 +115,7 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(window);
 
-return ret ;
+    return ret ;
 }
 
 
@@ -276,9 +292,17 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
 
         // if click is on highlighted square(possible move), execute the move
         if (board->pressed&&square->highlighted){
-            ret = executeGUIMove(board, squareRow, squareCol) ;
+            SPMove* move = (SPMove*)malloc(sizeof(SPMove)) ;
+            if (move==NULL)
+                return ERROR ;
+            move->sourceRow = 7 - board->pressedLocation[0] ;
+            move->sourceColumn = board->pressedLocation[1] ;
+            move->destRow = 7 - squareRow ;
+            move->destColumn = squareCol ;
+            executeGUIMove(board, move) ;
             clearBoard(board) ;
-            return ret ;
+            free(move) ;
+            return NONE ;
         }
 
         clearBoard(board) ;
@@ -288,7 +312,6 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
         ret = colorPossibleMoves(board) ;
         return ret ;
     }
-
     return NONE ;
 }
 
@@ -308,34 +331,22 @@ void clearBoard(ChessBoard* board){
 }
 
 
-SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, int row, int col){
-    SPMove* move = (SPMove*)malloc(sizeof(SPMove)) ;
-    if (move==NULL)
-        return ERROR ;
+void executeGUIMove(ChessBoard* board, SPMove* move){
 
-    ChessSquare* dest = (ChessSquare*)board->squares[row][col]->data ;
-    ChessSquare* src = (ChessSquare*)board->squares[board->pressedLocation[0]][board->pressedLocation[1]]->data ;
-
-    move->sourceRow = 7 - board->pressedLocation[0] ;
-    move->sourceColumn = board->pressedLocation[1] ;
-    move->destRow = 7 - row ;
-    move->destColumn = col ;
+    ChessSquare* dest = (ChessSquare*)board->squares[7-move->destRow][move->destColumn]->data ;
+    ChessSquare* src = (ChessSquare*)board->squares[7-move->sourceRow][move->sourceColumn]->data ;
 
     executeMove(board->game, move) ;
 
     // move piece texture from source to dest square
     dest->piece = src->piece ;
     src->piece = NULL ;
-
-    free(move) ;
-    return NONE ;
 }
 
 
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board){
 
     SPArrayList* moves = spChessGetMoves(board->game, 7 - board->pressedLocation[0], board->pressedLocation[1]) ;
-    printf("pressed location is <%d,%d>\n", board->pressedLocation[0], board->pressedLocation[1]) ;
     if (moves==NULL)
         return ERROR ;
 

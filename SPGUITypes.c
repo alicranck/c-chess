@@ -188,7 +188,7 @@ void drawChessSquare(Widget* src, SDL_Renderer* rend){
     if (square->highlighted)
         SDL_SetTextureColorMod(square->texture, 0, 255, 0);
     if (square->capture)
-        SDL_SetTextureColorMod(square->texture, 255, 255, 0);
+        SDL_SetTextureColorMod(square->texture, 0, 50, 255);
     if (square->threatend)
         SDL_SetTextureColorMod(square->texture, 255, 0, 0);
 
