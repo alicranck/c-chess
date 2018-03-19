@@ -316,9 +316,9 @@ SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, int row, int col){
     ChessSquare* dest = (ChessSquare*)board->squares[row][col]->data ;
     ChessSquare* src = (ChessSquare*)board->squares[board->pressedLocation[0]][board->pressedLocation[1]]->data ;
 
-    move->sourceRow = board->pressedLocation[0] ;
+    move->sourceRow = 7 - board->pressedLocation[0] ;
     move->sourceColumn = board->pressedLocation[1] ;
-    move->destRow = row ;
+    move->destRow = 7 - row ;
     move->destColumn = col ;
 
     executeMove(board->game, move) ;
@@ -327,33 +327,41 @@ SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, int row, int col){
     dest->piece = src->piece ;
     src->piece = NULL ;
 
+    free(move) ;
     return NONE ;
 }
 
 
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board){
 
-    SPArrayList* moves = spChessGetMoves(board->game, board->pressedLocation[0], board->pressedLocation[1]) ;
+    SPArrayList* moves = spChessGetMoves(board->game, 7 - board->pressedLocation[0], board->pressedLocation[1]) ;
     printf("pressed location is <%d,%d>\n", board->pressedLocation[0], board->pressedLocation[1]) ;
     if (moves==NULL)
         return ERROR ;
+
+    // check if the piece belongs to the current player
+    char piece = board->game->gameBoard[7-board->pressedLocation[0]][board->pressedLocation[1]] ;
+    char player = board->game->currentPlayer ;
+    if ((board->game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&isupper(piece))||
+            (board->game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&islower(piece)))
+        return NONE ;
+
 
     SPMove* move ;
     ChessSquare* square ;
 
     for (int i=0;i<moves->actualSize; i++){
-
-
         move = spArrayListGetAt(moves, i) ;
-        printf("possible move is %c in <%d,%d> to <%d,%d>\n", board->game->gameBoard[board->pressedLocation[0]][board->pressedLocation[1]],
-               board->pressedLocation[0], board->pressedLocation[1], move->destRow, move->destColumn) ;
-        square = (ChessSquare*)board->squares[move->destRow][move->destColumn]->data ;
+        square = (ChessSquare*)board->squares[7-move->destRow][move->destColumn]->data ;
         square->highlighted = true ;
-        if (square->texture!=NULL)
+
+        if (square->piece!=NULL)
             square->capture = true ;
-        if (spChessIsThreatend(board->game, move->destRow, move->destColumn, board->game->currentPlayer)==
-                SP_CHESS_GAME_UNDER_THREAT)
+
+        testMove(board->game, move) ;
+        if (spChessIsThreatend(board->game, move->destRow, move->destColumn, player)==SP_CHESS_GAME_UNDER_THREAT)
             square->threatend = true ;
+        undoTestMove(board->game, move) ;
     }
 
     return NONE ;

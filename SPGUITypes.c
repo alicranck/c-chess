@@ -186,11 +186,11 @@ void drawChessSquare(Widget* src, SDL_Renderer* rend){
     if (square->hover)
         SDL_SetTextureColorMod(square->texture, 100, 100, 100);
     if (square->highlighted)
-        SDL_SetTextureColorMod(square->texture, 100, 255, 100);
+        SDL_SetTextureColorMod(square->texture, 0, 255, 0);
     if (square->capture)
-        SDL_SetTextureColorMod(square->texture, 100, 100, 255);
+        SDL_SetTextureColorMod(square->texture, 255, 255, 0);
     if (square->threatend)
-        SDL_SetTextureColorMod(square->texture, 255, 50, 50);
+        SDL_SetTextureColorMod(square->texture, 255, 0, 0);
 
     SDL_RenderCopy(rend, square->texture, NULL, square->location);
     SDL_RenderCopy(rend, square->piece, NULL, square->location);
