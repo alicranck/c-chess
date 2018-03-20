@@ -5,9 +5,6 @@
 #ifndef SPFINALPROJECT_SPGUISETTINGSSCREEN_H
 #define SPFINALPROJECT_SPGUISETTINGSSCREEN_H
 
-#endif //SPFINALPROJECT_SPGUISETTINGSSCREEN_H
-
-
 #include <SDL.h>
 #include <SDL_video.h>
 #include <stdio.h>
@@ -54,3 +51,6 @@ SP_GUI_MESSAGE expertAction();
 SP_GUI_MESSAGE backAction();
 
 SP_GUI_MESSAGE startAction();
+
+
+#endif //SPFINALPROJECT_SPGUISETTINGSSCREEN_H

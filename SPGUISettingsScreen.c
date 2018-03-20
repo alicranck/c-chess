@@ -63,34 +63,36 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
         return ERROR ;
     }
 
-    // Draw buttons
-    for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
-        buttons[i]->draw(buttons[i], rend) ;
-    }
+
 
     // Event loop
     while(1){
+        // Draw buttons
+        for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
+            buttons[i]->draw(buttons[i], rend) ;
+        }
         SDL_RenderPresent(rend);
         SDL_Event e ;
         Button* button ;
         SDL_WaitEvent(&e) ;
         if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
+            ret = QUIT ;
             break ;
         }
         for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
             // Disable settings in 2-player mode
             if (settings[0]==2&&i!=0){
                 button = (Button*)buttons[i]->data ;
-                button->pressed = true ;
+                button->disabled = true ;
                 button->hover = true ;
             }
             ret = buttons[i]->handleEvent(buttons[i], &e) ;
-            if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
+            if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME||ret==BACK)
                 break ;
             if (ret!=NONE)
                 changeSettings(settings, ret) ;
         }
-        if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
+        if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME||ret==BACK)
             break ;
     }
 
@@ -311,7 +313,7 @@ SP_GUI_MESSAGE expertAction(){
 }
 
 SP_GUI_MESSAGE backAction(){
-    return MAIN_MENU ;
+    return BACK ;
 }
 
 SP_GUI_MESSAGE startAction(){

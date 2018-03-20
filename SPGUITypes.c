@@ -60,6 +60,7 @@ Widget* createButton(SDL_Renderer* rend, char* img, char* highlightImg, char* pr
     button->action = action ;
     button->hover = false ;
     button->pressed = false ;
+    button->disabled = false ;
 
     Widget* widget = (Widget*)malloc(sizeof(Widget)) ;
     if (widget==NULL){
@@ -101,7 +102,7 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
     if(e->type==SDL_MOUSEBUTTONDOWN){
         SDL_Point p = {0, 0};
         SDL_GetMouseState(&p.x, &p.y) ;
-        if (SDL_PointInRect(&p, button->location)&&!button->pressed){
+        if (SDL_PointInRect(&p, button->location)&&!button->pressed&&!button->disabled){
             SDL_RenderCopy(button->rend, button->pressedTexture, NULL, button->location);
             button->pressed = true ;
         }
@@ -110,7 +111,6 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
         SDL_Point p = {0, 0};
         SDL_GetMouseState(&p.x, &p.y) ;
         if (SDL_PointInRect(&p, button->location)&&button->pressed){
-            SDL_RenderCopy(button->rend, button->texture, NULL, button->location);
             button->pressed = false ;
             return (*button->action)() ;
         }
@@ -120,7 +120,17 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
 
 void drawButton(Widget* src, SDL_Renderer* rend){
     Button* button= (Button*)src->data ;
-    SDL_RenderCopy(rend, button->texture, NULL, button->location);
+    SDL_SetTextureColorMod(button->texture, 255, 255, 255);
+    if (button->disabled){
+        SDL_SetTextureColorMod(button->texture, 50, 50, 50);
+        SDL_RenderCopy(rend, button->texture, NULL, button->location);
+        return ;
+    }
+    if (button->pressed)
+        SDL_RenderCopy(rend, button->pressedTexture, NULL, button->location);
+    else
+        SDL_RenderCopy(rend, button->texture, NULL, button->location);
+
 }
 
 

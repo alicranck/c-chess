@@ -27,12 +27,17 @@ typedef enum sp_gui_message_t{
     LEVEL_HARD,
     LEVEL_EXPERT,
     UNDO_MOVE,
+    UP,
+    DOWN,
+    BACK,
     QUIT,
     ERROR,
     NONE
 }SP_GUI_MESSAGE;
 
+
 typedef struct widget_t Widget ;
+
 struct widget_t{
     void (*draw)(Widget*, SDL_Renderer*) ;
     SP_GUI_MESSAGE (*handleEvent)(Widget*, SDL_Event*) ;
@@ -48,6 +53,7 @@ typedef struct button_t{
     SDL_Rect* location ;
     bool hover ;
     bool pressed ;
+    bool disabled ;
     SP_GUI_MESSAGE (*action)(void) ;
 }Button;
 

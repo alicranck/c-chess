@@ -79,6 +79,7 @@ typedef enum sp_chess_game_message_t {
     SP_CHESS_GAME_LEGAL_MOVE,
     SP_CHESS_GAME_STILL_CHECK,
     SP_CHESS_GAME_INTO_CHECK,
+	SP_CHESS_GAME_ILLEGAL_PATH,
 } SP_CHESS_GAME_MESSAGE;
 
 /**
@@ -235,6 +236,28 @@ SPArrayList* spChessGetMoves(SPChessGame* game, int row, int col);
 * SP_CHESS_GAME_NO_WINNER - otherwise
 */
 SP_CHESS_GAME_MESSAGE spChessCheckWinner(SPChessGame* game);
+
+
+/**
+ * loads a game from a given filepath
+ * @param game a pointer to the game into which to load the game state. assumed not NULL
+ * @param filepath a string containing the path to the saved game
+ * @return ILLEGAL_PATH if 'fopen' fails
+ *          STANDART_ERROR if 'fwrite' fails
+ *          NO_ERROR on success
+ */
+SP_CHESS_GAME_MESSAGE spChessLoad(SPChessGame* game, char* filepath) ;
+
+
+/**
+ * saves a given game to a given filepath
+ * @param game a pointer to the game to be saved
+ * @param filepath a string containing the path to the saved game
+ * @return ILLEGAL_PATH if 'fopen' fails
+ *          STANDART_ERROR if 'fread' fails
+ *          NO_ERROR on success
+ */
+SP_CHESS_GAME_MESSAGE spChessSave(SPChessGame* game, char* filepath) ;
 
 
 //--------------------------------------------------auxiliary functions----------------------------------------

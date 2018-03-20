@@ -21,7 +21,7 @@ set(SOURCE_FILES
         SPMiniMax.c
         SPMiniMax.h
         main.c
-        SPGUISettingsScreen.c SPGUISettingsScreen.h SPGUIGameScreen.c SPGUIGameScreen.h)
+        SPGUISettingsScreen.c SPGUISettingsScreen.h SPGUIGameScreen.c SPGUIGameScreen.h SPGUISaveLoadScreen.c SPGUISaveLoadScreen.h)
 
 include_directories(${PROJECT_SOURCE_DIR}/include)
 link_directories(${PROJECT_SOURCE_DIR}/lib)

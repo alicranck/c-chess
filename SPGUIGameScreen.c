@@ -4,13 +4,12 @@
 
 #include <ctype.h>
 #include "SPGUIGameScreen.h"
-#include "SPMiniMax.h"
 
 
 SDL_Texture* pieces[12] ;
 
 
-SP_GUI_MESSAGE drawGameWindow(int* settings){
+SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
 
     SP_GUI_MESSAGE ret ;
     ChessBoard* board ;
@@ -90,7 +89,7 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
     }
 
     // Create board
-    board = createGUIChessGame(rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", settings) ;
+    board = createGUIChessGame(rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", game) ;
     if (board==NULL){
         printf("ERROR: unable to create board: %s\n", SDL_GetError());
         destroyPieceTextures() ;
@@ -116,23 +115,33 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
             break ;
         }
         ret = handleBoardEvent(board, &e) ;
-        // Add buttons event handling
+        if (ret==ERROR){
+            printf("ERROR: error handling board event\n") ;
+            break ;
+        }
+        // Buttons event handling
         for (int i=0; i<GAME_NUM_BUTTONS; i++){
             ret = buttons[i]->handleEvent(buttons[i], &e) ;
             if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME)
                 break ;
+            if (ret==SAVE_GAME){
+                ret = drawSaveLoadWindow(game, true) ;
+                break ;
+            }
+            if (ret==LOAD_GAME){
+                ret = drawSaveLoadWindow(game, false) ;
+                break ;
+            }
             /**
-            if (ret==SAVE_GAME)
-                saveGame(board) ;
-            if (ret==LOAD_GAME)
-                loadGame() ;
             if (ret==UNDO_MOVE)
                 undoMove(board) ;
                 **/
         }
-        if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME)
+        if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME)
             break ;
-
+        if (ret==START_GAME){
+            redrawBoard(board, game) ;
+        }
         drawBoard(rend, board) ;
         SDL_RenderPresent(rend);
 
@@ -160,10 +169,9 @@ SP_GUI_MESSAGE drawGameWindow(int* settings){
 
 
 ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg,
-                               int* settings){
+                               SPChessGame* game){
     
     ChessBoard* board = (ChessBoard*)malloc(sizeof(ChessBoard)) ;
-    SPChessGame* game = spChessCreate(settings) ;
     SDL_Rect* location = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
     if (board==NULL||game==NULL||location==NULL)
         return NULL ;
@@ -178,9 +186,9 @@ ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* 
             loc->w = SQUARE_SIDE ;
             loc->h = SQUARE_SIDE ;
             if ((i+j)%2==0)
-                board->squares[i][j] = createChessSquare(rend, brightSquareImg, loc, getPieceTex(game->gameBoard[i][j])) ;
+                board->squares[i][j] = createChessSquare(rend, brightSquareImg, loc, getPieceTex(game->gameBoard[7-i][j])) ;
             else
-                board->squares[i][j] = createChessSquare(rend, darkSquareImg, loc, getPieceTex(game->gameBoard[i][j])) ;
+                board->squares[i][j] = createChessSquare(rend, darkSquareImg, loc, getPieceTex(game->gameBoard[7-i][j])) ;
             if (board->squares[i][j]==NULL)
                 return NULL ;
 
@@ -197,6 +205,17 @@ ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* 
     board->pressed = false ;
 
     return board ;
+}
+
+
+void redrawBoard(ChessBoard* board, SPChessGame* game){
+    ChessSquare* square ;
+    for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
+        for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
+            square = (ChessSquare*)board->squares[i][j]->data ;
+            square->piece = getPieceTex(game->gameBoard[7-i][j]) ;
+        }
+    }
 }
 
 
@@ -236,7 +255,7 @@ Widget** createGameButtons(SDL_Renderer* rend){
     loadRect->w = GAME_BUTTON_WIDTH ;
     loadRect->h = GAME_BUTTON_HEIGHT ;
     buttons[2] = createButton(rend, "bmp/game/loadGame.bmp","bmp/game/loadGameHL.bmp",
-                              "bmp/game/loadGameP.bmp", loadRect, &gameLoadAction) ;
+                              "bmp/game/loadGameP.bmp", loadRect, &loadAction) ;
 
     // restart button
     SDL_Rect* restartRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
@@ -344,9 +363,9 @@ SDL_Texture* getPieceTex(char piece){
     int index ;
 
     if (isupper(piece))
-        white = 0 ;
-    else
         white = 1 ;
+    else
+        white = 0 ;
 
     switch (tolower(piece)){
         case 'r':
@@ -548,14 +567,6 @@ SP_GUI_MESSAGE undoAction(){
     return UNDO_MOVE ;
 }
 
-SP_GUI_MESSAGE saveAction(){
-    return SAVE_GAME ;
-}
-
-SP_GUI_MESSAGE gameLoadAction(){
-    return LOAD_GAME ;
-}
-
 SP_GUI_MESSAGE restartAction(){
     return START_NEW_GAME ;
 }
@@ -566,4 +577,8 @@ SP_GUI_MESSAGE mainAction(){
 
 SP_GUI_MESSAGE gameQuitAction(){
     return QUIT ;
+}
+
+SP_GUI_MESSAGE saveAction(){
+    return SAVE_GAME ;
 }

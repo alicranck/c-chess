@@ -148,28 +148,6 @@ char* getPieceString(char piece) ;
 
 
 /**
- * loads a game from a given filepath
- * @param game a pointer to the game into which to load the game state. assumed not NULL
- * @param filepath a string containing the path to the saved game
- * @return ILLEGAL_PATH if 'fopen' fails
- *          STANDART_ERROR if 'fwrite' fails
- *          NO_ERROR on success
- */
-ERROR spChessLoad(SPChessGame* game, char* filepath) ;
-
-
-/**
- * saves a given game to a given filepath
- * @param game a pointer to the game to be saved
- * @param filepath a string containing the path to the saved game
- * @return ILLEGAL_PATH if 'fopen' fails
- *          STANDART_ERROR if 'fread' fails
- *          NO_ERROR on success
- */
-ERROR spChessSave(SPChessGame* game, char* filepath) ;
-
-
-/**
  * terminates the program
  */
 void quit() ;

@@ -5,12 +5,14 @@
 #ifndef SPFINALPROJECT_SPGUIGAMESCREEN_H
 #define SPFINALPROJECT_SPGUIGAMESCREEN_H
 
-#endif //SPFINALPROJECT_SPGUIGAMESCREEN_H
 #include <SDL.h>
 #include <SDL_video.h>
 #include <stdio.h>
 #include "SPGUITypes.h"
+#include "SPGUISaveLoadScreen.h"
 #include "SPCHESSGame.h"
+#include "SPMiniMax.h"
+
 
 #define BOARD_Y 50
 #define BOARD_X 506
@@ -32,9 +34,11 @@
 #define GAME_NUM_BUTTONS 6
 
 
-SP_GUI_MESSAGE drawGameWindow(int* settings) ;
+SP_GUI_MESSAGE drawGameWindow(SPChessGame* game) ;
 
-ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, int* settings) ;
+ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, SPChessGame* game) ;
+
+void redrawBoard(ChessBoard* board, SPChessGame* game) ;
 
 Widget** createGameButtons(SDL_Renderer* rend) ;
 
@@ -62,10 +66,12 @@ SP_GUI_MESSAGE undoAction();
 
 SP_GUI_MESSAGE saveAction();
 
-SP_GUI_MESSAGE gameLoadAction();
+SP_GUI_MESSAGE loadAction();
 
 SP_GUI_MESSAGE restartAction();
 
 SP_GUI_MESSAGE mainAction();
 
 SP_GUI_MESSAGE gameQuitAction();
+
+#endif //SPFINALPROJECT_SPGUIGAMESCREEN_H

@@ -446,8 +446,101 @@ SP_CHESS_GAME_MESSAGE spChessCheckWinner(SPChessGame* game){
 }
 
 
+/**
+ * loads a game from a given filepath
+ * @param game a pointer to the game into which to load the game state. assumed not NULL
+ * @param filepath a string containing the path to the saved game
+ * @return ILLEGAL_PATH if 'fopen' fails
+ *          STANDART_ERROR if 'fwrite' fails
+ *          NO_ERROR on success
+ */
+SP_CHESS_GAME_MESSAGE spChessLoad(SPChessGame* game, char* filepath){
+
+    size_t ret ;
+
+    FILE* f = fopen(filepath, "rb") ;
+    if (f==NULL)
+        return  SP_CHESS_GAME_ILLEGAL_PATH ;
+
+    ret = fread(game->gameBoard, sizeof(char), 64, f) ;
+    if (ret!=64)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fread(&(game->currentPlayer), sizeof(char), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fread(&(game->gameMode), sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fread(&(game->userColor), sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fread(&(game->difficulty), sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fread(&(game->blackKing), sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fread(&(game->whiteKing), sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    fclose(f) ;
+    return SP_CHESS_GAME_SUCCESS ;
+}
 
 
+/**
+ * saves a given game to a given filepath
+ * @param game a pointer to the game to be saved
+ * @param filepath a string containing the path to the saved game
+ * @return ILLEGAL_PATH if 'fopen' fails
+ *          STANDART_ERROR if 'fread' fails
+ *          NO_ERROR on success
+ */
+SP_CHESS_GAME_MESSAGE spChessSave(SPChessGame* game, char* filepath){
+    size_t ret ;
+
+    FILE* f = fopen(filepath, "wb") ;
+    if (f==NULL)
+        return  SP_CHESS_GAME_ILLEGAL_PATH ;
+
+    ret = fwrite(game->gameBoard, sizeof(char), 64, f) ;
+    if (ret!=64)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fwrite(&game->currentPlayer, sizeof(char), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fwrite(&game->gameMode, sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fwrite(&game->userColor, sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fwrite(&game->difficulty, sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fwrite(&game->blackKing, sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    ret = fwrite(&game->whiteKing, sizeof(int), 1, f) ;
+    if (ret!=1)
+        return SP_CHESS_GAME_STANDART_ERROR ;
+
+    fclose(f) ;
+    return SP_CHESS_GAME_SUCCESS ;
+}
 
 //---------------------------------------------------Auxiliary functions------------------------------------------------
 /**

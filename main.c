@@ -7,6 +7,8 @@
 #include "SPGUIGameScreen.h"
 
 int settings[3] = {1,2,1};
+SPChessGame* game ;
+
 
 int main(int argc, char** argv){
 
@@ -44,7 +46,8 @@ SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen){
         case MAIN_MENU:
             return drawStartWindow() ;
         case START_GAME:
-            drawGameWindow(settings) ;
+            game = spChessCreate(settings) ;
+            drawGameWindow(game) ;
         case ERROR:
             //displayError() ;
             return drawStartWindow() ;

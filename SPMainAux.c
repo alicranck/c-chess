@@ -13,8 +13,8 @@
 SPChessGame* startNewGame(){
 
     SPCommand* cmd ;
-    SPChessGame* game ;
-    ERROR ret ;
+    SPChessGame* game = NULL ;
+    SP_CHESS_GAME_MESSAGE msg ;
     bool loaded = false ;
     bool start = false ;
     int settings[3] = {1,2,1};
@@ -50,13 +50,13 @@ SPChessGame* startNewGame(){
                     printError(STANDART_ERROR, "malloc()") ;
                     break ;
                 }
-                ret = spChessLoad(game, cmd->filePath) ;
-                if (ret==STANDART_ERROR){
+                msg = spChessLoad(game, cmd->filePath) ;
+                if (msg==STANDART_ERROR){
                     printError(STANDART_ERROR, "fread()") ;
                     spChessDestroy(game) ;
                     break ;
                 }
-                if (ret==ILLEGAL_PATH){
+                if (msg==ILLEGAL_PATH){
                     printError(ILLEGAL_PATH, NULL) ;
                     spChessDestroy(game) ;
                     break ;
@@ -338,6 +338,7 @@ ERROR checkLegalCommand(SPChessGame* game, SPCommand* cmd){
 int executeUserCommand(SPCommand* cmd, SPChessGame* game){
     int ret = 3 ;
     ERROR err = NO_ERROR ;
+    SP_CHESS_GAME_MESSAGE msg ;
     char* path ;
     switch(cmd->cmd){
         case SP_QUIT:
@@ -349,14 +350,14 @@ int executeUserCommand(SPCommand* cmd, SPChessGame* game){
 	        break ;
         case SP_SAVE:
             path = cmd->filePath ;
-            err = spChessSave(game, cmd->filePath) ;
-            if (err==STANDART_ERROR){
+            msg = spChessSave(game, cmd->filePath) ;
+            if (msg==SP_CHESS_GAME_STANDART_ERROR){
                 printError(STANDART_ERROR, "fwrite()") ;
                 err = NO_ERROR ;
                 ret = 5 ;
                 break ;
             }
-            if (err==ILLEGAL_PATH){
+            if (msg==SP_CHESS_GAME_ILLEGAL_PATH){
                 printError(ILLEGAL_PATH, NULL) ;
                 err = NO_ERROR ;
                 ret = 5 ;
@@ -527,103 +528,6 @@ char* getPieceString(char piece){
     if (piece=='k'||piece=='K')
         return "king" ;
     return '\0' ;
-}
-
-
-/**
- * loads a game from a given filepath
- * @param game a pointer to the game into which to load the game state. assumed not NULL
- * @param filepath a string containing the path to the saved game
- * @return ILLEGAL_PATH if 'fopen' fails
- *          STANDART_ERROR if 'fwrite' fails
- *          NO_ERROR on success
- */
-ERROR spChessLoad(SPChessGame* game, char* filepath){
-
-    size_t ret ;
-
-    FILE* f = fopen(filepath, "rb") ;
-    if (f==NULL)
-        return  ILLEGAL_PATH ;
-
-    ret = fread(game->gameBoard, sizeof(char), 64, f) ;
-    if (ret!=64)
-        return STANDART_ERROR ;
-
-    ret = fread(&(game->currentPlayer), sizeof(char), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fread(&(game->gameMode), sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fread(&(game->userColor), sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fread(&(game->difficulty), sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fread(&(game->blackKing), sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fread(&(game->whiteKing), sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    fclose(f) ;
-    return NO_ERROR ;
-}
-
-
-/**
- * saves a given game to a given filepath
- * @param game a pointer to the game to be saved
- * @param filepath a string containing the path to the saved game
- * @return ILLEGAL_PATH if 'fopen' fails
- *          STANDART_ERROR if 'fread' fails
- *          NO_ERROR on success
- */
-ERROR spChessSave(SPChessGame* game, char* filepath){
-    size_t ret ;
-
-    FILE* f = fopen(filepath, "wb") ;
-    if (f==NULL)
-        return  ILLEGAL_PATH ;
-
-    ret = fwrite(game->gameBoard, sizeof(char), 64, f) ;
-    if (ret!=64)
-        return STANDART_ERROR ;
-
-    ret = fwrite(&game->currentPlayer, sizeof(char), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fwrite(&game->gameMode, sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fwrite(&game->userColor, sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fwrite(&game->difficulty, sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fwrite(&game->blackKing, sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    ret = fwrite(&game->whiteKing, sizeof(int), 1, f) ;
-    if (ret!=1)
-        return STANDART_ERROR ;
-
-    fclose(f) ;
-    return NO_ERROR ;
 }
 
 
