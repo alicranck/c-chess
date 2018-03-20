@@ -83,10 +83,6 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         return ERROR ;
     }
 
-    // Draw buttons
-    for (int i=0; i<GAME_NUM_BUTTONS; i++){
-        buttons[i]->draw(buttons[i], rend) ;
-    }
 
     // Create board
     board = createGUIChessGame(rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", game) ;
@@ -100,46 +96,54 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         return ERROR ;
     }
 
-
-
     // Event loop
     while(1){
+        // Disable undo button if no history
+        Button* button ;
+        button = (Button *) buttons[0]->data;
+        if (game->history->actualSize==0)
+            button->disabled = true;
+        else
+            button->disabled = false ;
+
+        // Draw buttons
+        for (int i=0; i<GAME_NUM_BUTTONS; i++){
+            buttons[i]->draw(buttons[i], rend) ;
+        }
+
+        // Draw board and present
         drawBoard(rend, board) ;
         SDL_RenderPresent(rend);
 
         SDL_Event e ;
-        Button* button ;
         SDL_WaitEvent(&e) ;
         if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
             ret = QUIT ;
             break ;
         }
+
+        // Seperately handle board and button events
         ret = handleBoardEvent(board, &e) ;
         if (ret==ERROR){
             printf("ERROR: error handling board event\n") ;
             break ;
         }
+
         // Buttons event handling
         for (int i=0; i<GAME_NUM_BUTTONS; i++){
             ret = buttons[i]->handleEvent(buttons[i], &e) ;
-            if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME)
-                break ;
-            if (ret==SAVE_GAME){
+            if (ret==SAVE_GAME)
                 ret = drawSaveLoadWindow(game, true) ;
-                break ;
-            }
-            if (ret==LOAD_GAME){
+            if (ret==LOAD_GAME)
                 ret = drawSaveLoadWindow(game, false) ;
-                break ;
-            }
-            /**
             if (ret==UNDO_MOVE)
-                undoMove(board) ;
-                **/
+                ret = undoGUIMove(game) ;
+            if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME||ret==RELOAD_GAME)
+                break ;
         }
         if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME)
             break ;
-        if (ret==START_GAME){
+        if (ret==RELOAD_GAME){
             redrawBoard(board, game) ;
         }
         drawBoard(rend, board) ;
@@ -463,6 +467,18 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
         }
     }
     return NONE ;
+}
+
+
+SP_GUI_MESSAGE undoGUIMove(SPChessGame* game){
+
+    SP_CHESS_GAME_MESSAGE ret ;
+    ret = spChessUndoPrevMove(game) ;
+    if (ret==SP_CHESS_GAME_NO_HISTORY)
+        return NONE ;
+
+    spChessUndoPrevMove(game) ;
+    return RELOAD_GAME ;
 }
 
 

@@ -54,6 +54,8 @@ void clearBoard(ChessBoard* board) ;
 
 SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move) ;
 
+SP_GUI_MESSAGE undoGUIMove(SPChessGame* game) ;
+
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col) ;
 
 void destroyGUIGame(ChessBoard* board);

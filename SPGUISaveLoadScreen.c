@@ -102,10 +102,10 @@ SP_GUI_MESSAGE drawSaveLoadWindow(SPChessGame* game, bool save){
                 ret = loadGUIGame(game, currentSlot) ;
             if (ret==SAVE_GAME)
                 ret =  saveGUIGame(game, currentSlot) ;
-            if (ret==QUIT||ret==ERROR||ret==BACK||ret==START_GAME)
+            if (ret==QUIT||ret==ERROR||ret==BACK||ret==RELOAD_GAME)
                 break ;
         }
-        if (ret==QUIT||ret==ERROR||ret==BACK||ret==START_GAME)
+        if (ret==QUIT||ret==ERROR||ret==BACK||ret==RELOAD_GAME)
             break ;
     }
 
@@ -233,7 +233,7 @@ SP_GUI_MESSAGE loadGUIGame(SPChessGame* game, int currentSlot){
     if (spChessLoad(game, filePath)!=SP_CHESS_GAME_SUCCESS)
         return ERROR ;
 
-    return START_GAME ;
+    return RELOAD_GAME ;
 }
 
 
