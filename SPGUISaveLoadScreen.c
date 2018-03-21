@@ -101,7 +101,7 @@ SP_GUI_MESSAGE drawSaveLoadWindow(SPChessGame* game, bool save){
             if (ret==LOAD_GAME)
                 ret = loadGUIGame(game, currentSlot) ;
             if (ret==SAVE_GAME)
-                ret =  saveGUIGame(game, currentSlot) ;
+                ret = saveGUIGame(game, currentSlot) ;
             if (ret==QUIT||ret==ERROR||ret==BACK||ret==RELOAD_GAME)
                 break ;
         }
@@ -230,9 +230,18 @@ SP_GUI_MESSAGE loadGUIGame(SPChessGame* game, int currentSlot){
     char filePath[64];
     sprintf(filePath, "saves/slot%d", currentSlot+1);
 
-    if (spChessLoad(game, filePath)!=SP_CHESS_GAME_SUCCESS)
-        return ERROR ;
+    if (access(filePath, F_OK) == -1) {
+        return NONE ;
+    }
 
+    if (spChessLoad(game, filePath)==SP_CHESS_GAME_STANDART_ERROR){
+        printf("ERROR: could not open save file %s, 'fread()' failed.\n", filePath) ;
+        return ERROR ;
+    }
+    if (spChessLoad(game, filePath)==SP_CHESS_GAME_ILLEGAL_PATH){
+        printf("ERROR: could not open save file %s, Illegal path.\n", filePath) ;
+        return ERROR ;
+    }
     return RELOAD_GAME ;
 }
 
@@ -241,9 +250,14 @@ SP_GUI_MESSAGE saveGUIGame(SPChessGame* game, int currentSlot){
     char filePath[64];
     sprintf(filePath, "saves/slot%d", currentSlot+1);
 
-    if (spChessSave(game, filePath)!=SP_CHESS_GAME_SUCCESS)
+    if (spChessSave(game, filePath)==SP_CHESS_GAME_STANDART_ERROR){
+        printf("ERROR: could not open save file %s, 'fwrite()' failed.\n", filePath) ;
         return ERROR ;
-
+    }
+    if (spChessSave(game, filePath)==SP_CHESS_GAME_ILLEGAL_PATH){
+        printf("ERROR: could not open save file %s, Illegal path.\n", filePath) ;
+        return ERROR ;
+    }
     return BACK ;
 }
 

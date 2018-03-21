@@ -254,6 +254,10 @@ void testMove(SPChessGame* game, SPMove* move) {
     // Simulate move
     game->gameBoard[move->destRow][move->destColumn] = piece;
     game->gameBoard[move->sourceRow][move->sourceColumn] = SP_CHESS_GAME_EMPTY_ENTRY;
+    if (piece=='k')
+        game->whiteKing = move->destRow*8 + move->destColumn ;
+    if (piece=='K')
+        game->blackKing = move->destRow*8 + move->destColumn ;
     swapCurrent(game) ;
 }
 
@@ -269,6 +273,10 @@ void undoTestMove(SPChessGame* game, SPMove* move){
     // Restore board
     game->gameBoard[move->destRow][move->destColumn] = move->previousPiece ;
     game->gameBoard[move->sourceRow][move->sourceColumn] = dest ;
+    if (dest=='k')
+        game->whiteKing = move->sourceRow*8 + move->sourceColumn ;
+    if (dest=='K')
+        game->blackKing = move->sourceRow*8 + move->sourceColumn ;
     swapCurrent(game) ;
 }
 

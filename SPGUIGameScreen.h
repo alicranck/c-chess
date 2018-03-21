@@ -16,10 +16,10 @@
 
 #define BOARD_Y 50
 #define BOARD_X 506
-#define BOARD_SIDE 668
 
-#define PIECE_HEIGHT 64
-#define PIECE_WIDTH 64
+#define PIECE_HEIGHT 200
+#define PIECE_WIDTH 200
+#define PIECE_GAP 23
 
 #define SQUARE_SIDE 75
 
@@ -31,7 +31,13 @@
 #define GAME_BUTTON_HEIGHT 50
 #define GAME_VERTICAL_DIFF 70
 
+#define INDICATOR_X 406
+#define WHITE_INDICATOR_Y 540
+#define BLACK_INDICATOR_Y 80
+#define INDICATOR_SIDE 70
+
 #define GAME_NUM_BUTTONS 6
+
 
 
 SP_GUI_MESSAGE drawGameWindow(SPChessGame* game) ;
@@ -52,11 +58,17 @@ SDL_Texture* getPieceTex(char piece) ;
 
 void clearBoard(ChessBoard* board) ;
 
+void drawIndicators(SDL_Renderer* rend, SDL_Texture* tex, SPChessGame* game) ;
+
+SDL_Texture* createCheckIndicators(SDL_Renderer* rend) ;
+
 SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move) ;
 
 SP_GUI_MESSAGE undoGUIMove(SPChessGame* game) ;
 
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col) ;
+
+SP_GUI_MESSAGE finishGUIGame(SDL_Window* window, SPChessGame* game);
 
 void destroyGUIGame(ChessBoard* board);
 

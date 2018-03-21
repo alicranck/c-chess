@@ -97,8 +97,8 @@ SP_GUI_MESSAGE drawStartWindow(){
             break ;
         }
         ret = (*newGameButton->handleEvent)(newGameButton, &e) ;
-        if (ret!=NONE){
-            break;}
+        if (ret!=NONE)
+            break;
         ret = (*loadButton->handleEvent)(loadButton, &e) ;
         if (ret!=NONE)
             break;

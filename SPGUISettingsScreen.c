@@ -67,25 +67,28 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
 
     // Event loop
     while(1){
+        Button* button ;
         // Draw buttons
         for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
+            // Disable settings in 2-player mode
+            if (settings[0]==2&&i>1&&i<9){
+                button = (Button*)buttons[i]->data ;
+                button->disabled = true ;
+            }
+            if (settings[0]==1&&i>1&&i<9){
+                button = (Button*)buttons[i]->data ;
+                button->disabled = false ;
+            }
             buttons[i]->draw(buttons[i], rend) ;
         }
         SDL_RenderPresent(rend);
         SDL_Event e ;
-        Button* button ;
         SDL_WaitEvent(&e) ;
         if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
             ret = QUIT ;
             break ;
         }
         for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
-            // Disable settings in 2-player mode
-            if (settings[0]==2&&i!=0){
-                button = (Button*)buttons[i]->data ;
-                button->disabled = true ;
-                button->hover = true ;
-            }
             ret = buttons[i]->handleEvent(buttons[i], &e) ;
             if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_GAME||ret==BACK)
                 break ;

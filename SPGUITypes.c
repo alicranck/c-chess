@@ -87,6 +87,9 @@ void destroyButton(Widget* src){
 
 SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
     Button* button= (Button*)src->data ;
+    if (button->disabled)
+        return NONE ;
+
     if (e->type==SDL_MOUSEMOTION){
         SDL_Point p = {0, 0};
         SDL_GetMouseState(&p.x, &p.y) ;
@@ -128,6 +131,8 @@ void drawButton(Widget* src, SDL_Renderer* rend){
     }
     if (button->pressed)
         SDL_RenderCopy(rend, button->pressedTexture, NULL, button->location);
+    else if(button->hover)
+        SDL_RenderCopy(rend, button->highlightedTexture, NULL, button->location);
     else
         SDL_RenderCopy(rend, button->texture, NULL, button->location);
 

@@ -13,7 +13,6 @@ SPChessGame* game ;
 int main(int argc, char** argv){
 
     SP_GUI_MESSAGE ret ;
-
     // If console mode is chosen, run console mode and return
     if (argc==1||!strcmp(argv[1], "-c")){
         return consoleMain();
@@ -21,6 +20,7 @@ int main(int argc, char** argv){
 
     // Else, if GUI mode is selected, run from here
     if (!strcmp(argv[1], "-g")) {
+        game = spChessCreate(settings) ;
         // initialize SDL2 for video
         if (SDL_Init(SDL_INIT_VIDEO) < 0) {
             printf("ERROR: unable to init SDL: %s\n", SDL_GetError());
@@ -47,9 +47,16 @@ SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen){
             return drawStartWindow() ;
         case START_GAME:
             game = spChessCreate(settings) ;
-            drawGameWindow(game) ;
+            return drawGameWindow(game) ;
+        case LOAD_GAME:
+            return drawSaveLoadWindow(game, false) ;
+        case RELOAD_GAME:
+            if (game==NULL)
+                printf("game is null\n") ;
+            return drawGameWindow(game) ;
         case ERROR:
             //displayError() ;
+            printf("Error\n") ;
             return drawStartWindow() ;
 
     }

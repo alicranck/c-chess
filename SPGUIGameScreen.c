@@ -3,6 +3,7 @@
 //
 
 #include <ctype.h>
+#include <SDL_messagebox.h>
 #include "SPGUIGameScreen.h"
 
 
@@ -36,12 +37,20 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
     if (rend == NULL) {
         printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
-        SDL_Quit();
         return ERROR;
     }
 
     // ensure renderer supports transparency
     SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
+
+    // Create indicators
+    SDL_Texture* indicator = createCheckIndicators(rend) ;
+    if (indicator == NULL) {
+        printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
+        return ERROR;
+    }
 
     // set background
     SDL_Surface* surface = SDL_LoadBMP("bmp/game/bg.bmp") ;
@@ -83,7 +92,6 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         return ERROR ;
     }
 
-
     // Create board
     board = createGUIChessGame(rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", game) ;
     if (board==NULL){
@@ -110,6 +118,9 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         for (int i=0; i<GAME_NUM_BUTTONS; i++){
             buttons[i]->draw(buttons[i], rend) ;
         }
+
+        // Draw indicators
+        drawIndicators(rend, indicator, board->game) ;
 
         // Draw board and present
         drawBoard(rend, board) ;
@@ -147,7 +158,13 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
             redrawBoard(board, game) ;
         }
         drawBoard(rend, board) ;
+        drawIndicators(rend, indicator, board->game) ;
         SDL_RenderPresent(rend);
+
+        if (spChessCheckWinner(board->game)!=SP_CHESS_GAME_NO_WINNER){
+            ret = finishGUIGame(window, board->game) ;
+            break ;
+        }
 
         // Check for computer turn and execute it
         if ((board->game->gameMode==1)&&((board->game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&board->game->userColor==0)||
@@ -157,6 +174,10 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
             if (move==NULL)
                 return ERROR ;
             executeGUIMove(board, move) ;
+            if (spChessCheckWinner(board->game)!=SP_CHESS_GAME_NO_WINNER){
+                ret = finishGUIGame(window, board->game) ;
+                break ;
+            }
             continue ;
         }
     }
@@ -304,6 +325,48 @@ Widget** createGameButtons(SDL_Renderer* rend){
 }
 
 
+SDL_Texture* createCheckIndicators(SDL_Renderer* rend){
+
+    SDL_Surface* surface = SDL_LoadBMP("bmp/game/checkIndicator.bmp") ;
+    if (surface==NULL){
+        printf("ERROR: unable to load image: %s\n", SDL_GetError());
+        return NULL ;
+    }
+    SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, 255, 255, 255));
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
+    if (texture==NULL){
+        SDL_FreeSurface(surface) ;
+        printf("ERROR: unable to create texture from image: %s\n", SDL_GetError());
+        return NULL ;
+    }
+    SDL_FreeSurface(surface) ;
+    SDL_SetTextureColorMod(texture, 50, 50, 50) ;
+
+    return texture ;
+
+}
+
+
+void drawIndicators(SDL_Renderer* rend, SDL_Texture* tex, SPChessGame* game){
+
+    int isCheck = (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT) ;
+    int activeIndicatorY = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? WHITE_INDICATOR_Y : BLACK_INDICATOR_Y ;
+
+    SDL_Rect whiteRect = {.x = INDICATOR_X, .y = WHITE_INDICATOR_Y, .h = INDICATOR_SIDE, .w = INDICATOR_SIDE};
+    SDL_RenderCopy(rend, tex, NULL , &whiteRect);
+
+    SDL_Rect blackRect = {.x = INDICATOR_X, .y = BLACK_INDICATOR_Y, .h = INDICATOR_SIDE, .w = INDICATOR_SIDE};
+    SDL_RenderCopy(rend, tex, NULL , &blackRect);
+
+    if (isCheck){
+        SDL_SetTextureColorMod(tex, 255, 255, 255) ;
+        SDL_Rect activeRect = {.x = INDICATOR_X, .y = activeIndicatorY, .h = INDICATOR_SIDE, .w = INDICATOR_SIDE};
+        SDL_RenderCopy(rend, tex, NULL, &activeRect);
+    }
+    SDL_SetTextureColorMod(tex, 50, 50, 50) ;
+}
+
+
 void drawBoard(SDL_Renderer* rend, ChessBoard* board){
     for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++) {
         for (int j = 0; j < SP_CHESS_GAME_N_COLUMNS; j++) {
@@ -340,8 +403,8 @@ SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend){
     SDL_FreeSurface(surf);
 
     for (int i=0;i<12;i++){
-        rect->x = PIECE_WIDTH*(i%6) ;
-        rect->y = PIECE_HEIGHT*(i/6) ;
+        rect->x = (PIECE_WIDTH+PIECE_GAP)*(i/3) ;
+        rect->y = PIECE_HEIGHT*(i%3) ;
         rect->h = PIECE_HEIGHT ;
         rect->w = PIECE_WIDTH ;
         pieces[i] = SDL_CreateTexture(rend,SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_TARGET, SQUARE_SIDE, SQUARE_SIDE) ;
@@ -363,39 +426,35 @@ SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend){
 
 SDL_Texture* getPieceTex(char piece){
 
-    int white ;
-    int index ;
-
-    if (isupper(piece))
-        white = 1 ;
-    else
-        white = 0 ;
-
-    switch (tolower(piece)){
-        case 'r':
-            index = 0 ;
-            break ;
-        case 'b':
-            index = 1 ;
-            break ;
-        case 'q':
-            index = 2 ;
-            break ;
+    switch (piece){
         case 'k':
-            index = 3 ;
-            break ;
+            return pieces[0] ;
+        case 'r':
+            return pieces[1] ;
+        case 'b':
+            return pieces[2] ;
+        case 'q':
+            return pieces[3] ;
         case 'n':
-            index = 4 ;
-            break ;
+            return pieces[4] ;
         case 'm':
-            index = 5 ;
-            break ;
+            return pieces[5] ;
+        case 'Q':
+            return pieces[6] ;
+        case 'N':
+            return pieces[7] ;
+        case 'M':
+            return pieces[8] ;
+        case 'K':
+            return pieces[9] ;
+        case 'R':
+            return pieces[10] ;
+        case 'B':
+            return pieces[11] ;
         default:
             return NULL ;
     }
 
-    index += white*6 ;
-    return pieces[index] ;
 }
 
 
@@ -547,6 +606,57 @@ SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col){
     }
 
     return NONE ;
+}
+
+
+SP_GUI_MESSAGE finishGUIGame(SDL_Window* window, SPChessGame* game){
+    const SDL_MessageBoxButtonData buttons[] = {
+            { /* .flags, .buttonid, .text */        0, 0, "Restart" },
+            { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Main Menu" },
+            { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Quit" },
+    };
+    const SDL_MessageBoxColorScheme colorScheme = {
+            { /* .colors (.r, .g, .b) */
+                    /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
+                    { 255,   0,   0 },
+                    /* [SDL_MESSAGEBOX_COLOR_TEXT] */
+                    {   0, 255,   0 },
+                    /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
+                    { 255, 255,   0 },
+                    /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
+                    {   0,   0, 255 },
+                    /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
+                    { 255,   0, 255 }
+            }
+    };
+    SDL_MessageBoxData messageboxdata = {
+            SDL_MESSAGEBOX_INFORMATION, /* .flags */
+            window, /* .window */
+            "GAME OVER", /* .title */
+            "", /* .message */
+            SDL_arraysize(buttons), /* .numbuttons */
+            buttons, /* .buttons */
+            &colorScheme /* .colorScheme */
+    };
+
+    if (spChessCheckWinner(game)==SP_CHESS_GAME_CHECKMATE)
+        messageboxdata.message = "Checkmate, Please choose what to do next" ;
+    else
+        messageboxdata.message = "Draw, Please choose what to do next" ;
+
+    int buttonid;
+    if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
+        printf("error displaying message box\n");
+        return ERROR;
+    }
+    if (buttonid==-1||buttonid==2)
+        return QUIT ;
+    if (buttonid==0)
+        return START_NEW_GAME ;
+    if (buttonid==1)
+        return MAIN_MENU ;
+
+    return QUIT;
 }
 
 
