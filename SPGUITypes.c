@@ -106,15 +106,14 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
         SDL_Point p = {0, 0};
         SDL_GetMouseState(&p.x, &p.y) ;
         if (SDL_PointInRect(&p, button->location)&&!button->pressed&&!button->disabled){
-            SDL_RenderCopy(button->rend, button->pressedTexture, NULL, button->location);
             button->pressed = true ;
         }
     }
     if(e->type==SDL_MOUSEBUTTONUP){
         SDL_Point p = {0, 0};
         SDL_GetMouseState(&p.x, &p.y) ;
-        if (SDL_PointInRect(&p, button->location)&&button->pressed){
-            button->pressed = false ;
+        button->pressed = false ;
+        if (SDL_PointInRect(&p, button->location)){
             return (*button->action)() ;
         }
     }

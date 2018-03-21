@@ -19,6 +19,24 @@
 #define START_SCREEN_TOP_BUTTON_Y 330
 #define START_SCREEN_BUTTON_X 125
 
+#define START_NUM_BUTTONS 3
+
+
+/**
+ *  Create Main Menu buttons
+ * @param rend an SDL_Renderer for main window
+ * @return an array of START_NUM_BUTTONS Widgets containing the buttons
+ */
+Widget** createStartButtons(SDL_Renderer* rend) ;
+
+
+/**
+ * destroy all buttons in an array
+ * @param buttons - the array of buttons (Widget*) to destroy
+ * @param n - number of buttons in the array
+ */
+void destroyButtons(Widget** buttons, int n);
+
 
 
 

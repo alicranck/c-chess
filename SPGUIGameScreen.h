@@ -74,7 +74,7 @@ void destroyGUIGame(ChessBoard* board);
 
 void destroyPieceTextures();
 
-void destroyButtons(Widget** buttons);
+void destroyButtons(Widget** buttons, int n);
 
 SP_GUI_MESSAGE undoAction();
 

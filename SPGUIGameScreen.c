@@ -97,7 +97,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
     if (board==NULL){
         printf("ERROR: unable to create board: %s\n", SDL_GetError());
         destroyPieceTextures() ;
-        destroyButtons(buttons) ;
+        destroyButtons(buttons, GAME_NUM_BUTTONS) ;
         SDL_DestroyTexture(texture);
         SDL_DestroyRenderer(rend);
         SDL_DestroyWindow(window);
@@ -149,10 +149,10 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
                 ret = drawSaveLoadWindow(game, false) ;
             if (ret==UNDO_MOVE)
                 ret = undoGUIMove(game) ;
-            if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME||ret==RELOAD_GAME)
+            if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==RESTART_GAME||ret==RELOAD_GAME)
                 break ;
         }
-        if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==START_NEW_GAME)
+        if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==RESTART_GAME)
             break ;
         if (ret==RELOAD_GAME){
             redrawBoard(board, game) ;
@@ -184,7 +184,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
 
     destroyGUIGame(board) ;
     destroyPieceTextures() ;
-    destroyButtons(buttons) ;
+    destroyButtons(buttons, GAME_NUM_BUTTONS) ;
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(window);
@@ -195,12 +195,11 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
 
 ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg,
                                SPChessGame* game){
-    
     ChessBoard* board = (ChessBoard*)malloc(sizeof(ChessBoard)) ;
     SDL_Rect* location = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
     if (board==NULL||game==NULL||location==NULL)
         return NULL ;
-    
+
     for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
         for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
             SDL_Rect* loc = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
@@ -652,7 +651,7 @@ SP_GUI_MESSAGE finishGUIGame(SDL_Window* window, SPChessGame* game){
     if (buttonid==-1||buttonid==2)
         return QUIT ;
     if (buttonid==0)
-        return START_NEW_GAME ;
+        return RESTART_GAME ;
     if (buttonid==1)
         return MAIN_MENU ;
 
@@ -681,8 +680,8 @@ void destroyPieceTextures(){
 }
 
 
-void destroyButtons(Widget** buttons){
-    for (int i=0; i<GAME_NUM_BUTTONS; i++){
+void destroyButtons(Widget** buttons, int n){
+    for (int i=0; i<n; i++){
         buttons[i]->destroy(buttons[i]) ;
         free(buttons[i]) ;
     }
@@ -694,7 +693,7 @@ SP_GUI_MESSAGE undoAction(){
 }
 
 SP_GUI_MESSAGE restartAction(){
-    return START_NEW_GAME ;
+    return RESTART_GAME ;
 }
 
 SP_GUI_MESSAGE mainAction(){

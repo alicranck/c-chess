@@ -7,7 +7,7 @@
 #include "SPGUIGameScreen.h"
 
 int settings[3] = {1,2,1};
-SPChessGame* game ;
+SPChessGame* game = NULL ;
 
 
 int main(int argc, char** argv){
@@ -20,7 +20,6 @@ int main(int argc, char** argv){
 
     // Else, if GUI mode is selected, run from here
     if (!strcmp(argv[1], "-g")) {
-        game = spChessCreate(settings) ;
         // initialize SDL2 for video
         if (SDL_Init(SDL_INIT_VIDEO) < 0) {
             printf("ERROR: unable to init SDL: %s\n", SDL_GetError());
@@ -45,18 +44,20 @@ SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen){
             return drawSettingsWindow(settings) ;
         case MAIN_MENU:
             return drawStartWindow() ;
+        case BACK:
+            return drawStartWindow() ;
         case START_GAME:
             game = spChessCreate(settings) ;
             return drawGameWindow(game) ;
+        case RESTART_GAME :
+            game = spChessCreate(settings) ;
+            return drawGameWindow(game) ;
         case LOAD_GAME:
+            game = spChessCreate(settings) ;
             return drawSaveLoadWindow(game, false) ;
         case RELOAD_GAME:
-            if (game==NULL)
-                printf("game is null\n") ;
             return drawGameWindow(game) ;
         case ERROR:
-            //displayError() ;
-            printf("Error\n") ;
             return drawStartWindow() ;
 
     }

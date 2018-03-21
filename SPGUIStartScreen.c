@@ -8,6 +8,7 @@
 SP_GUI_MESSAGE drawStartWindow(){
 
     SP_GUI_MESSAGE ret = NONE ;
+    Widget** buttons ;
 
     // create main SDL window
     SDL_Window *window = SDL_CreateWindow(
@@ -20,98 +21,71 @@ SP_GUI_MESSAGE drawStartWindow(){
 
     // make sure window was created successfully
     if (window == NULL) {
-        printf("ERROR: unable to create window: %s\n", SDL_GetError());
-        SDL_Quit();
+        printf("ERROR: unable to create main window: %s\n", SDL_GetError());
         return ERROR;
     }
 
     // create a renderer for the window
     SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     if (rend == NULL) {
-        printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
+        printf("ERROR: unable to create main window renderer: %s\n", SDL_GetError());
         SDL_DestroyWindow(window);
-        SDL_Quit();
         return ERROR;
     }
 
     // set background
     SDL_Surface* surface = SDL_LoadBMP("bmp/start/startBg.bmp") ;
     if (surface==NULL){
-        printf("ERROR: unable to load image: %s\n", SDL_GetError());
+        printf("ERROR: unable to load main window background image: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(rend) ;
+        SDL_DestroyWindow(window);
         return ERROR ;
     }
     SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
     if (texture==NULL){
         SDL_FreeSurface(surface) ;
-        printf("ERROR: unable to create texture from image: %s\n", SDL_GetError());
+        SDL_DestroyRenderer(rend) ;
+        SDL_DestroyWindow(window);
+        printf("ERROR: unable to create main window texture from image: %s\n", SDL_GetError());
         return ERROR ;
     }
     SDL_FreeSurface(surface) ;
     SDL_RenderCopy(rend, texture, NULL, NULL);
 
-    SDL_Rect* newGameRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
-    if (newGameRect==NULL)
+    // Create buttons
+    buttons = createStartButtons(rend) ;
+    if (buttons==NULL){
+        SDL_DestroyTexture(texture) ;
+        SDL_DestroyRenderer(rend) ;
+        SDL_DestroyWindow(window);
+        printf("ERROR: unable to create main window buttons: %s\n", SDL_GetError());
         return ERROR ;
-    newGameRect->x = START_SCREEN_BUTTON_X ;
-    newGameRect->y = START_SCREEN_TOP_BUTTON_Y ;
-    newGameRect->w = BUTTON_WIDTH ;
-    newGameRect->h = BUTTON_HEIGHT;
-    Widget* newGameButton = createButton(rend, "bmp/start/newGame.bmp", "bmp/start/newGameHL.bmp",
-                                         "bmp/start/newGameP.bmp", newGameRect, &newGameAction) ;
-    if (newGameButton==NULL)
-        return ERROR ;
-    newGameButton->draw(newGameButton, rend);
+    }
 
-    SDL_Rect* loadRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
-    if (loadRect==NULL)
-        return ERROR ;
-    loadRect->x = START_SCREEN_BUTTON_X ;
-    loadRect->y = START_SCREEN_TOP_BUTTON_Y + BUTTON_VERTICAL_DIFF ;
-    loadRect->w = BUTTON_WIDTH ;
-    loadRect->h = BUTTON_HEIGHT;
-    Widget* loadButton = createButton(rend, "bmp/start/loadGame.bmp","bmp/start/loadGameHL.bmp",
-                                      "bmp/start/loadGameP.bmp", loadRect, &loadAction) ;
-    if (loadButton==NULL)
-        return ERROR ;
-    loadButton->draw(loadButton, rend);
+    // Draw buttons
+    for (int i=0;i<START_NUM_BUTTONS;i++){
+        buttons[i]->draw(buttons[i], rend) ;
+    }
 
-
-    SDL_Rect* quitRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
-    if (quitRect==NULL)
-        return ERROR ;
-    quitRect->x = START_SCREEN_BUTTON_X ;
-    quitRect->y = START_SCREEN_TOP_BUTTON_Y + 2*BUTTON_VERTICAL_DIFF ;
-    quitRect->w = BUTTON_WIDTH ;
-    quitRect->h = BUTTON_HEIGHT;
-    Widget* quitButton = createButton(rend, "bmp/start/quit.bmp", "bmp/start/quitHL.bmp",
-                                      "bmp/start/quitP.bmp", quitRect, &quitAction) ;
-    if (quitButton==NULL)
-        return ERROR ;
-    quitButton->draw(quitButton, rend);
-
+    // Event loop
     while(1){
         SDL_RenderPresent(rend);
         SDL_Event e ;
         SDL_WaitEvent(&e) ;
         if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
+            ret = QUIT ;
             break ;
         }
-        ret = (*newGameButton->handleEvent)(newGameButton, &e) ;
+        for (int i=0;i<START_NUM_BUTTONS;i++){
+            ret = buttons[i]->handleEvent(buttons[i], &e) ;
+            if (ret!=NONE)
+                break ;
+        }
         if (ret!=NONE)
-            break;
-        ret = (*loadButton->handleEvent)(loadButton, &e) ;
-        if (ret!=NONE)
-            break;
-        ret = (*quitButton->handleEvent)(quitButton, &e) ;
-        if (ret!=NONE)
-            break;
+            break ;
     }
-    newGameButton->destroy(newGameButton) ;
-    free(newGameButton) ;
-    loadButton->destroy(loadButton) ;
-    free(loadButton);
-    quitButton->destroy(quitButton) ;
-    free(quitButton) ;
+
+    destroyButtons(buttons, START_NUM_BUTTONS) ;
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(rend);
     SDL_DestroyWindow(window);
@@ -119,6 +93,55 @@ SP_GUI_MESSAGE drawStartWindow(){
     return ret ;
 }
 
+
+/**
+ *  Create Main Menu buttons
+ * @param rend an SDL_Renderer for main window
+ * @return an array of START_NUM_BUTTONS Widgets containing the buttons
+ */
+Widget** createStartButtons(SDL_Renderer* rend){
+    Widget** buttons = (Widget**)malloc(sizeof(Widget*)*START_NUM_BUTTONS) ;
+    if (buttons==NULL)
+        return NULL ;
+
+    SDL_Rect* newGameRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (newGameRect==NULL)
+        return NULL ;
+    newGameRect->x = START_SCREEN_BUTTON_X ;
+    newGameRect->y = START_SCREEN_TOP_BUTTON_Y ;
+    newGameRect->w = BUTTON_WIDTH ;
+    newGameRect->h = BUTTON_HEIGHT;
+    buttons[0] = createButton(rend, "bmp/start/newGame.bmp", "bmp/start/newGameHL.bmp",
+                                         "bmp/start/newGameP.bmp", newGameRect, &newGameAction) ;
+
+    SDL_Rect* loadRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (loadRect==NULL)
+        return NULL ;
+    loadRect->x = START_SCREEN_BUTTON_X ;
+    loadRect->y = START_SCREEN_TOP_BUTTON_Y + BUTTON_VERTICAL_DIFF ;
+    loadRect->w = BUTTON_WIDTH ;
+    loadRect->h = BUTTON_HEIGHT;
+    buttons[1] = createButton(rend, "bmp/start/loadGame.bmp","bmp/start/loadGameHL.bmp",
+                                      "bmp/start/loadGameP.bmp", loadRect, &loadAction) ;
+
+    SDL_Rect* quitRect = (SDL_Rect*)malloc(sizeof(SDL_Rect)) ;
+    if (quitRect==NULL)
+        return NULL ;
+    quitRect->x = START_SCREEN_BUTTON_X ;
+    quitRect->y = START_SCREEN_TOP_BUTTON_Y + 2*BUTTON_VERTICAL_DIFF ;
+    quitRect->w = BUTTON_WIDTH ;
+    quitRect->h = BUTTON_HEIGHT;
+    buttons[2] = createButton(rend, "bmp/start/quit.bmp", "bmp/start/quitHL.bmp",
+                                      "bmp/start/quitP.bmp", quitRect, &quitAction) ;
+
+    // Check that all buttons were created successfully
+    for (int i=0;i<START_NUM_BUTTONS;i++){
+        if (buttons[i]==NULL)
+            return NULL ;
+    }
+
+    return buttons ;
+}
 
 
 SP_GUI_MESSAGE newGameAction(){
