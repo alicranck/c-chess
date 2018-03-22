@@ -25,7 +25,7 @@
 /**
  *  Create Main Menu buttons
  * @param rend an SDL_Renderer for main window
- * @return an array of START_NUM_BUTTONS Widgets containing the buttons
+ * @return an array of START_NUM_BUTTONS Widgets containing the buttons.  NULL on allocation error
  */
 Widget** createStartButtons(SDL_Renderer* rend) ;
 

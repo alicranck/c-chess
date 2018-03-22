@@ -14,79 +14,35 @@ SP_GUI_MESSAGE drawSaveLoadWindow(SPChessGame* game, bool save){
     Widget** buttons ;
     int currentSlot = 0 ;
 
-    // create main SDL window
-    SDL_Window *window = SDL_CreateWindow(
-            "SPChessSettings",
-            SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
-            450,
-            600,
-            SDL_WINDOW_OPENGL);
+    Screen* screen = createScreen(450, 600, "bmp/save/saveBg.bmp", "save/load") ;
+    if (screen==NULL)
+        return ERROR ;
 
-    // make sure window was created successfully
-    if (window == NULL) {
-        printf("ERROR: unable to create window: %s\n", SDL_GetError());
-        return ERROR;
-    }
-
-    // create a renderer for the window
-    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (rend == NULL) {
-        printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        return ERROR;
-    }
-
-    if (createSlotTextures(rend, save)!=NONE){
-        printf("ERROR: unable to create slots: %s\n", SDL_GetError());
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
+    if (createSlotTextures(screen->rend, save)!=NONE){
+        printf("ERROR: unable to create save/load slots: %s\n", SDL_GetError());
+        destroyScreen(screen) ;
         return ERROR ;
     }
-
-    // set background
-    SDL_Surface* surface = SDL_LoadBMP("bmp/save/saveBg.bmp") ;
-    if (surface==NULL){
-        printf("ERROR: unable to load image: %s\n", SDL_GetError());
-        destroySlotTextures() ;
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return ERROR ;
-    }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
-    if (texture==NULL){
-        destroySlotTextures() ;
-        SDL_FreeSurface(surface) ;
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        printf("ERROR: unable to create texture from image: %s\n", SDL_GetError());
-        return ERROR ;
-    }
-    SDL_FreeSurface(surface) ;
-    SDL_RenderCopy(rend, texture, NULL, NULL);
 
     // Create buttons
-    buttons = createSaveLoadButtons(rend, save) ;
+    buttons = createSaveLoadButtons(screen->rend, save) ;
     if (buttons==NULL){
         destroySlotTextures() ;
-        SDL_DestroyTexture(texture);
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        printf("ERROR: unable to create buttons: %s\n", SDL_GetError());
+        destroyScreen(screen) ;
+        printf("ERROR: unable to create save/load buttons: %s\n", SDL_GetError());
         return ERROR ;
     }
 
     // Draw buttons
     for (int i=0; i<SAVE_NUM_BUTTONS; i++){
-        buttons[i]->draw(buttons[i], rend) ;
+        buttons[i]->draw(buttons[i], screen->rend) ;
     }
 
     // Event loop
     while(1){
-        drawSlot(rend, currentSlot) ;
-        SDL_RenderPresent(rend);
+        drawSlot(screen->rend, currentSlot) ;
+        SDL_RenderPresent(screen->rend);
         SDL_Event e ;
-        Button* button ;
         SDL_WaitEvent(&e) ;
         if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
             ret = QUIT ;
@@ -94,8 +50,11 @@ SP_GUI_MESSAGE drawSaveLoadWindow(SPChessGame* game, bool save){
         }
         for (int i=0; i<SAVE_NUM_BUTTONS; i++){
             ret = buttons[i]->handleEvent(buttons[i], &e) ;
-            if (ret==UP)
+            if (ret==UP){
                 currentSlot = (currentSlot-1)%NUM_SLOTS ;
+                if (currentSlot<0)
+                    currentSlot = 5+currentSlot ;
+            }
             if (ret==DOWN)
                 currentSlot = (currentSlot+1)%NUM_SLOTS ;
             if (ret==LOAD_GAME)
@@ -109,20 +68,20 @@ SP_GUI_MESSAGE drawSaveLoadWindow(SPChessGame* game, bool save){
             break ;
     }
 
-    // Destroy buttons
-    for (int i=0; i<SAVE_NUM_BUTTONS; i++){
-        buttons[i]->destroy(buttons[i]) ;
-        free(buttons[i]) ;
-    }
+    destroyButtons(buttons, SAVE_NUM_BUTTONS) ;
     destroySlotTextures() ;
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(rend);
-    SDL_DestroyWindow(window);
+    destroyScreen(screen) ;
 
     return ret ;
 }
 
 
+/**
+ *  Create Save/Load screen buttons
+ * @param rend an SDL_Renderer for Save/Load window
+ * @param save - a flag to indicate weather it is a save or load screen. buttons are generated accordingly
+ * @return an array of SAVE_NUM_BUTTONS Widgets containing the buttons. NULL on allocation error
+ */
 Widget** createSaveLoadButtons(SDL_Renderer* rend, bool save){
 
     Widget** buttons = (Widget**)malloc(sizeof(Widget*)*SAVE_NUM_BUTTONS) ;
@@ -183,7 +142,13 @@ Widget** createSaveLoadButtons(SDL_Renderer* rend, bool save){
 }
 
 
-
+/**
+ * creates textures for the different possible save slots. in case of load screen,
+ * unused slots will be disabled (greyed out)
+ * @param rend an SDL_Renderer for Save/Load window
+ * @param save a flag to indicate weather it is a save or load screen. slots are generated accordingly
+ * @return SP_GUI_MESSAGE NONE on success, ERROR on SDL error.
+ */
 SP_GUI_MESSAGE createSlotTextures(SDL_Renderer* rend, bool save){
 
     for (int i=1; i<NUM_SLOTS+1;i++) {
@@ -213,19 +178,12 @@ SP_GUI_MESSAGE createSlotTextures(SDL_Renderer* rend, bool save){
 }
 
 
-void destroySlotTextures() {
-    for (int i=0;i<NUM_SLOTS;i++){
-        SDL_DestroyTexture(slots[i]) ;
-    }
-}
-
-
-void drawSlot(SDL_Renderer* rend, int currentSlot){
-    SDL_Rect location = {.x = SLOT_X, .y = SLOT_Y, .h = SLOT_HEIGHT, .w = SLOT_WIDTH};
-    SDL_RenderCopy(rend, slots[currentSlot], NULL, &location) ;
-}
-
-
+/**
+ * loads a game state from a file, uses 'spChessLoad' from 'SPCHESSGame.c'
+ * @param game a pointer to a game instance into which to load the state. assumed not NULL.
+ * @param currentSlot which slot to load from.
+ * @return SP_GUI_MESSAGE NONE if slot is disabled, ERROR on 'fread()' fail, RELOAD_GAME on success.
+ */
 SP_GUI_MESSAGE loadGUIGame(SPChessGame* game, int currentSlot){
     char filePath[64];
     sprintf(filePath, "saves/slot%d", currentSlot+1);
@@ -246,6 +204,12 @@ SP_GUI_MESSAGE loadGUIGame(SPChessGame* game, int currentSlot){
 }
 
 
+/**
+ * saves a game state to a file, uses 'spChessSave' from 'SPCHESSGame.c'
+ * @param game a pointer to a game instance to save. assumed not NULL.
+ * @param currentSlot which slot to save to.
+ * @return SP_GUI_MESSAGE ERROR on 'fwrite()' fail, BACK on success.
+ */
 SP_GUI_MESSAGE saveGUIGame(SPChessGame* game, int currentSlot){
     char filePath[64];
     sprintf(filePath, "saves/slot%d", currentSlot+1);
@@ -259,6 +223,25 @@ SP_GUI_MESSAGE saveGUIGame(SPChessGame* game, int currentSlot){
         return ERROR ;
     }
     return BACK ;
+}
+
+
+/**
+ * auxiliary function to destroy slot graphics
+ */
+void destroySlotTextures() {
+    for (int i=0;i<NUM_SLOTS;i++){
+        SDL_DestroyTexture(slots[i]) ;
+    }
+}
+
+
+/**
+ * auxiliary function to draw slot graphics
+ */
+void drawSlot(SDL_Renderer* rend, int currentSlot){
+    SDL_Rect location = {.x = SLOT_X, .y = SLOT_Y, .h = SLOT_HEIGHT, .w = SLOT_WIDTH};
+    SDL_RenderCopy(rend, slots[currentSlot], NULL, &location) ;
 }
 
 

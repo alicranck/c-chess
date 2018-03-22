@@ -6,6 +6,17 @@
 
 
 //--------------------------------------Button Methods-------------------------------------
+
+/**
+ * creates a button widget
+ * @param rend
+ * @param img - path to button image
+ * @param highlightImg - path to highlighted button image - for hover graphics
+ * @param pressedImg - path to pressed button image - for pressed graphics
+ * @param location - SDL_rect* with the location of the button
+ * @param action - a (void)() function which will be called on button click
+ * @return a Widget* with the created button on success. NULL on allocation or SDL error.
+ */
 Widget* createButton(SDL_Renderer* rend, char* img, char* highlightImg, char* pressedImg,
                      SDL_Rect* location, SP_GUI_MESSAGE (*action)(void)){
 
@@ -76,6 +87,11 @@ Widget* createButton(SDL_Renderer* rend, char* img, char* highlightImg, char* pr
     return widget ;
 }
 
+
+/**
+ * free all memory of a given button
+ * @param src
+ */
 void destroyButton(Widget* src){
     Button* button = (Button*)src->data ;
     SDL_DestroyTexture(button->texture) ;
@@ -85,6 +101,14 @@ void destroyButton(Widget* src){
     free(button) ;
 }
 
+
+/**
+ * handle button press event. activate hover/pressed graphics and call button action
+ * if needed.
+ * @param src
+ * @param e
+ * @return SP_GUI_MESSAGE NONE on success, or according to button action if clicked.
+ */
 SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
     Button* button= (Button*)src->data ;
     if (button->disabled)
@@ -120,9 +144,18 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
     return NONE ;
 }
 
+
+/**
+ * draw the given button according to the flags (disabled, pressed, etc.)
+ * @param src
+ * @param rend
+ */
 void drawButton(Widget* src, SDL_Renderer* rend){
+
     Button* button= (Button*)src->data ;
     SDL_SetTextureColorMod(button->texture, 255, 255, 255);
+
+    // if the button is disabled apply grey color mod
     if (button->disabled){
         SDL_SetTextureColorMod(button->texture, 50, 50, 50);
         SDL_RenderCopy(rend, button->texture, NULL, button->location);
@@ -141,6 +174,15 @@ void drawButton(Widget* src, SDL_Renderer* rend){
 
 
 //--------------------------------------ChessSquare Methods-----------------------------
+
+/**
+ * create a chessSquare widget.
+ * @param rend
+ * @param img path to bright or dark square images
+ * @param location SDL_Rect* with square location
+ * @param piece the texture of the piece to be located on the square (NULL if no piece)
+ * @return Widget* to the square on success. NULL on allocation or SDL error
+ */
 Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL_Texture* piece){
     ChessSquare* square = (ChessSquare*)malloc(sizeof(ChessSquare)) ;
     if (square==NULL)
@@ -183,6 +225,11 @@ Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL
     return widget ;
 }
 
+
+/**
+ * free all memory of given chess square
+ * @param src
+ */
 void destroyChessSquare(Widget* src){
     ChessSquare* square = (ChessSquare*)src->data ;
     SDL_DestroyTexture(square->texture) ;
@@ -190,10 +237,25 @@ void destroyChessSquare(Widget* src){
     free(square) ;
 }
 
+
+/**
+ * a dummy function to handle chess square events. In practice all events are handled by the board
+ * in 'SPGUIGameScreen.c'.
+ * @param src
+ * @param e
+ * @return SP_GUI_MESSAGE NONE
+ */
 SP_GUI_MESSAGE handleChessSquareEvent(Widget* src, SDL_Event* e) {
     return NONE ;
 }
 
+
+/**
+ * draw a chess square according to the flags (threatend, capture etc.) in the correct color
+ * uses 'SDL_SetTextureColorMod()' to change colors
+ * @param src
+ * @param rend
+ */
 void drawChessSquare(Widget* src, SDL_Renderer* rend){
     ChessSquare* square = (ChessSquare*)src->data ;
     SDL_SetTextureColorMod(square->texture, 255, 255, 255);
@@ -210,9 +272,80 @@ void drawChessSquare(Widget* src, SDL_Renderer* rend){
     SDL_RenderCopy(rend, square->piece, NULL, square->location);
 }
 
+//------------------------------------------------Window methods-----------------------------------------------
+
+/**
+ * a function to create a screen that ties together a window, renderer and background texture
+ * @param width window width
+ * @param height window height
+ * @param backgroundImage path to background image
+ * @param name name of the window
+ * @return a pointer to the Screen screen on success. NULL on SDL or allocation error
+ */
+Screen* createScreen(int width, int height, char* backgroundImage, char* name){
+
+    Screen* screen = (Screen*)malloc(sizeof(Screen)) ;
+    if (screen==NULL)
+        return NULL ;
+
+    SDL_Window *window = SDL_CreateWindow(
+            name,
+            SDL_WINDOWPOS_CENTERED,
+            SDL_WINDOWPOS_CENTERED,
+            width,
+            height,
+            SDL_WINDOW_OPENGL);
+
+    // make sure window was created successfully
+    if (window == NULL) {
+        printf("ERROR: unable to create %s window: %s\n", name, SDL_GetError());
+        return NULL;
+    }
+
+    // create a renderer for the window
+    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (rend == NULL) {
+        printf("ERROR: unable to create %s renderer: %s\n", name, SDL_GetError());
+        SDL_DestroyWindow(window);
+        return NULL;
+    }
+
+    // ensure renderer supports transparency
+    SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
+
+    // set background
+    SDL_Surface* surface = SDL_LoadBMP(backgroundImage) ;
+    if (surface==NULL){
+        printf("ERROR: unable to load %s background image: %s\n", name, SDL_GetError());
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
+        return NULL ;
+    }
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
+    if (texture==NULL){
+        printf("ERROR: unable to create %s texture from image: %s\n", name, SDL_GetError());
+        SDL_FreeSurface(surface) ;
+        SDL_DestroyRenderer(rend);
+        SDL_DestroyWindow(window);
+        return NULL ;
+    }
+    SDL_FreeSurface(surface) ;
+    SDL_RenderCopy(rend, texture, NULL, NULL);
+
+    screen->window = window ;
+    screen->rend = rend ;
+    screen->background = texture ;
+    return screen ;
+}
 
 
-
-
-
+/**
+ * an auxiliary function to destroy a Screen
+ * @param screen a pointer to the Screen to destroy
+ */
+void destroyScreen(Screen* screen){
+    SDL_DestroyTexture(screen->background) ;
+    SDL_DestroyRenderer(screen->rend) ;
+    SDL_DestroyWindow(screen->window) ;
+}
 

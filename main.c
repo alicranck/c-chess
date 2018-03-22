@@ -38,32 +38,31 @@ int main(int argc, char** argv){
 }
 
 
-SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE screen){
-    switch(screen){
-        case START_NEW_GAME:
-            return drawSettingsWindow(settings) ;
-        case MAIN_MENU:
-            return drawStartWindow() ;
-        case BACK:
-            return drawStartWindow() ;
-        case START_GAME:
-            game = spChessCreate(settings) ;
-            return drawGameWindow(game) ;
-        case RESTART_GAME :
-            game = spChessCreate(settings) ;
-            return drawGameWindow(game) ;
-        case LOAD_GAME:
-            game = spChessCreate(settings) ;
-            return drawSaveLoadWindow(game, false) ;
-        case RELOAD_GAME:
-            return drawGameWindow(game) ;
-        case ERROR:
-            return drawStartWindow() ;
+/**
+ * an auxiliary method to main used to control game flow
+ * @param msg an SP_GUI_MESSAGE to indicate the next screen to draw
+ * @return a message that represents the next screen, program ends only in case msg==QUIT 
+ */
+SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE msg){
 
+    if(msg==START_NEW_GAME)
+        return drawSettingsWindow(settings) ;
+
+    if(msg==MAIN_MENU||msg==BACK||msg==ERROR)
+        return drawStartWindow() ;
+
+    if (msg==START_GAME||msg==RESTART_GAME) {
+        game = spChessCreate(settings);
+        return drawGameWindow(game);
     }
-}
 
+    if(msg==LOAD_GAME) {
+        game = spChessCreate(settings);
+        return drawSaveLoadWindow(game, false);
+    }
 
-void displayError(){
+    if(msg==RELOAD_GAME)
+        return drawGameWindow(game) ;
 
+    return ERROR ;
 }

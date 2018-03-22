@@ -17,7 +17,6 @@
 #define SETTINGS_HORIZONTAL_DIFF 180
 #define SETTINGS_BUTTON_WIDTH 150
 #define SETTINGS_BUTTON_HEIGHT 40
-#define SETTINGS_VERTICAL_DIFF 60
 
 #define SETTINGS_NUM_BUTTONS 11
 
@@ -26,9 +25,25 @@
 
 SP_GUI_MESSAGE drawSettingsWindow(int* settings) ;
 
+
+/**
+ *  Create Settings screen buttons
+ * @param rend an SDL_Renderer for settings window
+ * @return an array of SETTINGS_NUM_BUTTONS Widgets containing the buttons. NULL on allocation error
+ */
 Widget** createSettingsButtons(SDL_Renderer* rend) ;
 
+
+/**
+ * a function to change the settings based on the pressed buttons
+ * @param settings a pointer to an int[3] array with the game settings
+ * @param msg an SP_GUI_MESSAGE containing info about setting to change
+ */
 void changeSettings(int* settings, SP_GUI_MESSAGE msg) ;
+
+
+
+void destroyButtons(Widget** buttons, int n);
 
 SP_GUI_MESSAGE onePlayerAction();
 

@@ -11,59 +11,17 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
     SP_GUI_MESSAGE ret = NONE ;
     Widget** buttons ;
 
-    // create main SDL window
-    SDL_Window *window = SDL_CreateWindow(
-            "SPChessSettings",
-            SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
-            450,
-            600,
-            SDL_WINDOW_OPENGL);
-
-    // make sure window was created successfully
-    if (window == NULL) {
-        printf("ERROR: unable to create window: %s\n", SDL_GetError());
-        return ERROR;
-    }
-
-    // create a renderer for the window
-    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (rend == NULL) {
-        printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        return ERROR;
-    }
-
-    // set background
-    SDL_Surface* surface = SDL_LoadBMP("bmp/start/startBg.bmp") ;
-    if (surface==NULL){
-        printf("ERROR: unable to load image: %s\n", SDL_GetError());
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
+    Screen* screen = createScreen(450, 600, "bmp/start/startBg.bmp", "settings") ;
+    if (screen==NULL)
         return ERROR ;
-    }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
-    if (texture==NULL){
-        SDL_FreeSurface(surface) ;
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        printf("ERROR: unable to create texture from image: %s\n", SDL_GetError());
-        return ERROR ;
-    }
-    SDL_FreeSurface(surface) ;
-    SDL_RenderCopy(rend, texture, NULL, NULL);
 
     // Create buttons
-    buttons = createSettingsButtons(rend) ;
+    buttons = createSettingsButtons(screen->rend) ;
     if (buttons==NULL){
-        SDL_DestroyTexture(texture);
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        printf("ERROR: unable to create buttons: %s\n", SDL_GetError());
+        destroyScreen(screen) ;
+        printf("ERROR: unable to create settings buttons: %s\n", SDL_GetError());
         return ERROR ;
     }
-
-
 
     // Event loop
     while(1){
@@ -79,9 +37,9 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
                 button = (Button*)buttons[i]->data ;
                 button->disabled = false ;
             }
-            buttons[i]->draw(buttons[i], rend) ;
+            buttons[i]->draw(buttons[i], screen->rend) ;
         }
-        SDL_RenderPresent(rend);
+        SDL_RenderPresent(screen->rend);
         SDL_Event e ;
         SDL_WaitEvent(&e) ;
         if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
@@ -100,20 +58,18 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
     }
 
     // Destroy buttons
-    for (int i=0; i<SETTINGS_NUM_BUTTONS; i++){
-        buttons[i]->destroy(buttons[i]) ;
-        free(buttons[i]) ;
-    }
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(rend);
-    SDL_DestroyWindow(window);
+    destroyButtons(buttons, SETTINGS_NUM_BUTTONS) ;
+    destroyScreen(screen) ;
 
     return ret ;
 }
 
 
-
-
+/**
+ *  Create Settings screen buttons
+ * @param rend an SDL_Renderer for settings window
+ * @return an array of SETTINGS_NUM_BUTTONS Widgets containing the buttons. NULL on allocation error
+ */
 Widget** createSettingsButtons(SDL_Renderer* rend){
 
     Widget** buttons = (Widget**)malloc(sizeof(Widget*)*SETTINGS_NUM_BUTTONS) ;
@@ -244,7 +200,11 @@ Widget** createSettingsButtons(SDL_Renderer* rend){
 }
 
 
-
+/**
+ * a function to change the settings based on the pressed buttons
+ * @param settings a pointer to an int[3] array with the game settings
+ * @param msg an SP_GUI_MESSAGE containing info about setting to change
+ */
 void changeSettings(int* settings, SP_GUI_MESSAGE msg){
     switch (msg){
         case MODE_ONE_PLAYER:

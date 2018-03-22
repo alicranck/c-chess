@@ -16,91 +16,43 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
     ChessBoard* board ;
     Widget** buttons ;
 
-    // create main SDL window
-    SDL_Window *window = SDL_CreateWindow(
-            "SPChess",
-            SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
-            1270,
-            768,
-            SDL_WINDOW_OPENGL);
+    Screen* screen = createScreen(1248, 724, "bmp/game/bg.bmp", "game") ;
+    if (screen==NULL)
+        return ERROR ;
 
-    // make sure window was created successfully
-    if (window == NULL) {
-        printf("ERROR: unable to create window: %s\n", SDL_GetError());
-        SDL_Quit();
+    // create textures for game pieces from image
+    ret = createPieceTextures("bmp/game/pieces.bmp", screen->rend) ;
+    if(ret==ERROR){
+        printf("ERROR: unable to create pieces textures: %s\n", SDL_GetError());
+        destroyScreen(screen) ;
         return ERROR;
     }
 
-    // create a renderer for the window
-    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (rend == NULL) {
-        printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        return ERROR;
-    }
-
-    // ensure renderer supports transparency
-    SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
-
-    // Create indicators
-    SDL_Texture* indicator = createCheckIndicators(rend) ;
+    // Create check indicators graphics
+    SDL_Texture* indicator = createCheckIndicators(screen->rend) ;
     if (indicator == NULL) {
-        printf("ERROR: unable to create renderer: %s\n", SDL_GetError());
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
+        printf("ERROR: unable to create check indicators: %s\n", SDL_GetError());
+        destroyPieceTextures() ;
+        destroyScreen(screen) ;
         return ERROR;
-    }
-
-    // set background
-    SDL_Surface* surface = SDL_LoadBMP("bmp/game/bg.bmp") ;
-    if (surface==NULL){
-        printf("ERROR: unable to load image: %s\n", SDL_GetError());
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return ERROR ;
-    }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
-    if (texture==NULL){
-        printf("ERROR: unable to create texture from image: %s\n", SDL_GetError());
-        SDL_FreeSurface(surface) ;
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return ERROR ;
-    }
-    SDL_FreeSurface(surface) ;
-    SDL_RenderCopy(rend, texture, NULL, NULL);
-
-    // create piece textures from image
-    ret = createPieceTextures("bmp/game/pieces.bmp", rend) ;
-    if (ret!=NONE){
-        printf("ERROR: unable to create piece textures: %s\n", SDL_GetError());
-        SDL_DestroyTexture(texture);
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return ERROR ;
     }
 
     // Create buttons
-    buttons = createGameButtons(rend) ;
+    buttons = createGameButtons(screen->rend) ;
     if (buttons==NULL){
         destroyPieceTextures() ;
-        SDL_DestroyTexture(texture);
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        printf("ERROR: unable to create buttons: %s\n", SDL_GetError());
+        destroyScreen(screen) ;
+        printf("ERROR: unable to create game buttons: %s\n", SDL_GetError());
         return ERROR ;
     }
 
     // Create board
-    board = createGUIChessGame(rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", game) ;
+    board = createGUIChessGame(screen->rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", game) ;
     if (board==NULL){
-        printf("ERROR: unable to create board: %s\n", SDL_GetError());
+        printf("ERROR: unable to create game board: %s\n", SDL_GetError());
         destroyPieceTextures() ;
         destroyButtons(buttons, GAME_NUM_BUTTONS) ;
-        SDL_DestroyTexture(texture);
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
+        destroyScreen(screen) ;
         return ERROR ;
     }
 
@@ -116,15 +68,15 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
 
         // Draw buttons
         for (int i=0; i<GAME_NUM_BUTTONS; i++){
-            buttons[i]->draw(buttons[i], rend) ;
+            buttons[i]->draw(buttons[i], screen->rend) ;
         }
 
         // Draw indicators
-        drawIndicators(rend, indicator, board->game) ;
+        drawIndicators(screen->rend, indicator, board->game) ;
 
         // Draw board and present
-        drawBoard(rend, board) ;
-        SDL_RenderPresent(rend);
+        drawBoard(screen->rend, board) ;
+        SDL_RenderPresent(screen->rend);
 
         SDL_Event e ;
         SDL_WaitEvent(&e) ;
@@ -157,12 +109,15 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         if (ret==RELOAD_GAME){
             redrawBoard(board, game) ;
         }
-        drawBoard(rend, board) ;
-        drawIndicators(rend, indicator, board->game) ;
-        SDL_RenderPresent(rend);
 
+        // redraw all graphics after last turn
+        drawBoard(screen->rend, board) ;
+        drawIndicators(screen->rend, indicator, board->game) ;
+        SDL_RenderPresent(screen->rend);
+
+        // check for mate/draw and finish game if necessary
         if (spChessCheckWinner(board->game)!=SP_CHESS_GAME_NO_WINNER){
-            ret = finishGUIGame(window, board->game) ;
+            ret = finishGUIGame(screen->window, board->game) ;
             break ;
         }
 
@@ -175,24 +130,31 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
                 return ERROR ;
             executeGUIMove(board, move) ;
             if (spChessCheckWinner(board->game)!=SP_CHESS_GAME_NO_WINNER){
-                ret = finishGUIGame(window, board->game) ;
+                ret = finishGUIGame(screen->window, board->game) ;
                 break ;
             }
             continue ;
         }
     }
 
+    // free all memory and return
     destroyGUIGame(board) ;
     destroyPieceTextures() ;
     destroyButtons(buttons, GAME_NUM_BUTTONS) ;
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(rend);
-    SDL_DestroyWindow(window);
+    destroyScreen(screen) ;
 
     return ret ;
 }
 
 
+/**
+ * create an instance of a ChessBoard struct.
+ * @param rend SDL_Renderer to create textures
+ * @param brightSquareImg path to image of a dark chess square
+ * @param darkSquareImg path to image of a bright chess square
+ * @param game a pointer to an SPChessGame instance to be associated with this board
+ * @return a ChessBoard pointer on sucess. NULL on SDL or allocation error
+ */
 ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg,
                                SPChessGame* game){
     ChessBoard* board = (ChessBoard*)malloc(sizeof(ChessBoard)) ;
@@ -232,17 +194,11 @@ ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* 
 }
 
 
-void redrawBoard(ChessBoard* board, SPChessGame* game){
-    ChessSquare* square ;
-    for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
-        for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
-            square = (ChessSquare*)board->squares[i][j]->data ;
-            square->piece = getPieceTex(game->gameBoard[7-i][j]) ;
-        }
-    }
-}
-
-
+/**
+ *  Create game screen buttons
+ * @param rend an SDL_Renderer for game window
+ * @return an array of GAME_NUM_BUTTONS Widgets containing the buttons.  NULL on allocation error
+ */
 Widget** createGameButtons(SDL_Renderer* rend){
     Widget** buttons = (Widget**)malloc(sizeof(Widget*)*GAME_NUM_BUTTONS) ;
     if (buttons==NULL)
@@ -324,6 +280,11 @@ Widget** createGameButtons(SDL_Renderer* rend){
 }
 
 
+/**
+ * create check indicators texture
+ * @param rend an SDL_Renderer pointer associated with this window
+ * @return a pointer to the created texture. NULL on SDL or allocation error
+ */
 SDL_Texture* createCheckIndicators(SDL_Renderer* rend){
 
     SDL_Surface* surface = SDL_LoadBMP("bmp/game/checkIndicator.bmp") ;
@@ -342,10 +303,15 @@ SDL_Texture* createCheckIndicators(SDL_Renderer* rend){
     SDL_SetTextureColorMod(texture, 50, 50, 50) ;
 
     return texture ;
-
 }
 
 
+/**
+ * draw check indicators texture
+ * @param rend an SDL_Renderer pointer associated with this window
+ * @param tex the texture to draw
+ * @param game an SPChessGame pointer to check for check
+ */
 void drawIndicators(SDL_Renderer* rend, SDL_Texture* tex, SPChessGame* game){
 
     int isCheck = (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT) ;
@@ -366,6 +332,11 @@ void drawIndicators(SDL_Renderer* rend, SDL_Texture* tex, SPChessGame* game){
 }
 
 
+/**
+ * draw a game board to screen
+ * @param rend an SDL_Renderer pointer associated with this window
+ * @param board a ChessBoard pointer for the board to draw
+ */
 void drawBoard(SDL_Renderer* rend, ChessBoard* board){
     for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++) {
         for (int j = 0; j < SP_CHESS_GAME_N_COLUMNS; j++) {
@@ -375,6 +346,28 @@ void drawBoard(SDL_Renderer* rend, ChessBoard* board){
 }
 
 
+/**
+ * reassign pieces textures to squares according to a given game state
+ * @param board the board on which to reassign the pieces
+ * @param game the game state to follow
+ */
+void redrawBoard(ChessBoard* board, SPChessGame* game){
+    ChessSquare* square ;
+    for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
+        for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
+            square = (ChessSquare*)board->squares[i][j]->data ;
+            square->piece = getPieceTex(game->gameBoard[7-i][j]) ;
+        }
+    }
+}
+
+
+/**
+ * create game piece textures from image
+ * @param piecesImg a path to the pieces sprite
+ * @param rend
+ * @return SP_GUI_MESSAGE NONE on success, ERROR on SDL or allocation error
+ */
 SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend){
 
     SDL_Rect* rect = (SDL_Rect*)malloc(sizeof(SDL_Rect));
@@ -423,6 +416,11 @@ SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend){
 }
 
 
+/**
+ * returns the texture of the given piece
+ * @param piece a char representing the piece
+ * @return SDL_Texture* to the requested texture
+ */
 SDL_Texture* getPieceTex(char piece){
 
     switch (piece){
@@ -457,7 +455,13 @@ SDL_Texture* getPieceTex(char piece){
 }
 
 
-
+/**
+ * a function to handle all mouse events inside the chess board perimeter, i.e - highlight possible moves
+ * on right click, selecting a piece, or executing a move.
+ * @param board The board in which to handle the event
+ * @param e the event
+ * @return SP_GUI_MESSAGE NONE on success or ERROR on allocation error
+ */
 SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
     // Check if the event is mouse event, and if it's in the board
     if (e->type!=SDL_MOUSEMOTION&&e->type!=SDL_MOUSEBUTTONDOWN&&e->type!=SDL_MOUSEBUTTONUP)
@@ -503,8 +507,10 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
         // if there is a chosen square on the board, try executing the move
         if (board->pressed){
             SPMove* move = (SPMove*)malloc(sizeof(SPMove)) ;
-            if (move==NULL)
+            if (move==NULL){
+                printf("ERROR: allocation error on board event handling\n");
                 return ERROR ;
+            }
             move->sourceRow = 7 - board->pressedLocation[0] ;
             move->sourceColumn = board->pressedLocation[1] ;
             move->destRow = 7 - squareRow ;
@@ -528,6 +534,11 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
 }
 
 
+/**
+ * undo last two moves (if possible). uses 'spChessUndoPrevMove' from 'SPCHESSGame.c'
+ * @param game a game state to update
+ * @return SP_GUI_MESSAGE NONE if no history, RELOAD_GAME on successful undo
+ */
 SP_GUI_MESSAGE undoGUIMove(SPChessGame* game){
 
     SP_CHESS_GAME_MESSAGE ret ;
@@ -540,6 +551,10 @@ SP_GUI_MESSAGE undoGUIMove(SPChessGame* game){
 }
 
 
+/**
+ * clears all extra graphics (highlighting etc.) from the game squares
+ * @param board
+ */
 void clearBoard(ChessBoard* board){
     ChessSquare* square ;
     for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
@@ -555,6 +570,12 @@ void clearBoard(ChessBoard* board){
 }
 
 
+/**
+ * execute a given move on the board and the game state
+ * @param board a board instance on which to execute the move
+ * @param move the move to execute
+ * @return SP_GUI_MESSAGE NONE on success. ERROR in case of illegal move
+ */
 SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
 
     if (spChessCheckLegalMove(board->game, move)!=SP_CHESS_GAME_LEGAL_MOVE)
@@ -573,6 +594,15 @@ SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
 }
 
 
+/**
+ * color possible moves according to suggested scheme: legal - green
+ *                                                     capture - blue
+ *                                                     threatend - red
+ * @param board
+ * @param row row of the position for which to check possible moves
+ * @param col
+ * @return ERROR on allocation error, NONE on success
+ */
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col){
 
     SPArrayList* moves = spChessGetMoves(board->game, 7 - row, col) ;
@@ -608,6 +638,12 @@ SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col){
 }
 
 
+/**
+ * in case of mate/draw, present a dialog box for the user to determine next step
+ * @param window
+ * @param game
+ * @return ERROR on SDL error. QUIT/RESTART_GAME/MAIN_MENU according to user selection otherwise
+ */
 SP_GUI_MESSAGE finishGUIGame(SDL_Window* window, SPChessGame* game){
     const SDL_MessageBoxButtonData buttons[] = {
             { /* .flags, .buttonid, .text */        0, 0, "Restart" },

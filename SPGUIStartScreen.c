@@ -10,66 +10,26 @@ SP_GUI_MESSAGE drawStartWindow(){
     SP_GUI_MESSAGE ret = NONE ;
     Widget** buttons ;
 
-    // create main SDL window
-    SDL_Window *window = SDL_CreateWindow(
-            "SPChess",
-            SDL_WINDOWPOS_CENTERED,
-            SDL_WINDOWPOS_CENTERED,
-            450,
-            600,
-            SDL_WINDOW_OPENGL);
-
-    // make sure window was created successfully
-    if (window == NULL) {
-        printf("ERROR: unable to create main window: %s\n", SDL_GetError());
-        return ERROR;
-    }
-
-    // create a renderer for the window
-    SDL_Renderer *rend = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-    if (rend == NULL) {
-        printf("ERROR: unable to create main window renderer: %s\n", SDL_GetError());
-        SDL_DestroyWindow(window);
-        return ERROR;
-    }
-
-    // set background
-    SDL_Surface* surface = SDL_LoadBMP("bmp/start/startBg.bmp") ;
-    if (surface==NULL){
-        printf("ERROR: unable to load main window background image: %s\n", SDL_GetError());
-        SDL_DestroyRenderer(rend) ;
-        SDL_DestroyWindow(window);
+    Screen* screen = createScreen(450, 600, "bmp/start/startBg.bmp", "main") ;
+    if (screen==NULL)
         return ERROR ;
-    }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
-    if (texture==NULL){
-        SDL_FreeSurface(surface) ;
-        SDL_DestroyRenderer(rend) ;
-        SDL_DestroyWindow(window);
-        printf("ERROR: unable to create main window texture from image: %s\n", SDL_GetError());
-        return ERROR ;
-    }
-    SDL_FreeSurface(surface) ;
-    SDL_RenderCopy(rend, texture, NULL, NULL);
 
     // Create buttons
-    buttons = createStartButtons(rend) ;
+    buttons = createStartButtons(screen->rend) ;
     if (buttons==NULL){
-        SDL_DestroyTexture(texture) ;
-        SDL_DestroyRenderer(rend) ;
-        SDL_DestroyWindow(window);
+        destroyScreen(screen) ;
         printf("ERROR: unable to create main window buttons: %s\n", SDL_GetError());
         return ERROR ;
     }
 
     // Draw buttons
     for (int i=0;i<START_NUM_BUTTONS;i++){
-        buttons[i]->draw(buttons[i], rend) ;
+        buttons[i]->draw(buttons[i], screen->rend) ;
     }
 
     // Event loop
     while(1){
-        SDL_RenderPresent(rend);
+        SDL_RenderPresent(screen->rend);
         SDL_Event e ;
         SDL_WaitEvent(&e) ;
         if (e.type==SDL_QUIT||e.key.keysym.sym==SDLK_ESCAPE){
@@ -86,10 +46,7 @@ SP_GUI_MESSAGE drawStartWindow(){
     }
 
     destroyButtons(buttons, START_NUM_BUTTONS) ;
-    SDL_DestroyTexture(texture);
-    SDL_DestroyRenderer(rend);
-    SDL_DestroyWindow(window);
-
+    destroyScreen(screen) ;
     return ret ;
 }
 
@@ -97,7 +54,7 @@ SP_GUI_MESSAGE drawStartWindow(){
 /**
  *  Create Main Menu buttons
  * @param rend an SDL_Renderer for main window
- * @return an array of START_NUM_BUTTONS Widgets containing the buttons
+ * @return an array of START_NUM_BUTTONS Widgets containing the buttons.  NULL on allocation error
  */
 Widget** createStartButtons(SDL_Renderer* rend){
     Widget** buttons = (Widget**)malloc(sizeof(Widget*)*START_NUM_BUTTONS) ;
