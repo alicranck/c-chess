@@ -9,8 +9,8 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "SPChessGame.h"
-#include "SPChessParser.h"
+#include "SPCHESSGame.h"
+#include "SPCHESSParser.h"
 #include "SPMiniMax.h"
 
 #define LINE_SIZE 1024

@@ -5,10 +5,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <limits.h>
 #include "SPMiniMax.h"
 
 
@@ -47,8 +44,8 @@ SPMove* spMinimaxSuggestMove(SPChessGame* game, int maxDepth){
 
     for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
         for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
-            if (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j])||
-                    game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j])){
+            if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
+                    (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
                 possibleMoves = spChessGetMoves(game, i, j) ;
                 if (possibleMoves==NULL)
                     return NULL ;
@@ -114,8 +111,8 @@ int spGetMinimaxScore(SPChessGame* game, int depth, int alpha, int beta){
     for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
         for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
             // If there is a piece of the current player on the current position, get all possible moves
-            if (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j])||
-                game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j])){
+            if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
+                    (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
                 possibleMoves = spChessGetMoves(game, i, j) ;
                 if (possibleMoves==NULL)
                     return ALLOC_ERROR ;
@@ -163,7 +160,10 @@ int spGetMinimaxScore(SPChessGame* game, int depth, int alpha, int beta){
             break ;
     }
 
-    if (count==0)
-        return getGameScore(game) ;
+    if (count==0){
+        score = (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT) ? 1000 : 0 ;
+        int i = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? 1 : -1 ;
+        return i*score ;
+    }
     return bestScore ;
 }

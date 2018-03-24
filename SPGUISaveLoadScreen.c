@@ -186,20 +186,23 @@ SP_GUI_MESSAGE createSlotTextures(SDL_Renderer* rend, bool save){
  */
 SP_GUI_MESSAGE loadGUIGame(SPChessGame* game, int currentSlot){
     char filePath[64];
+    SP_CHESS_GAME_MESSAGE ret ;
     sprintf(filePath, "saves/slot%d", currentSlot+1);
 
     if (access(filePath, F_OK) == -1) {
         return NONE ;
     }
 
-    if (spChessLoad(game, filePath)==SP_CHESS_GAME_STANDART_ERROR){
+    ret = spChessLoad(game, filePath) ;
+    if (ret==SP_CHESS_GAME_STANDART_ERROR){
         printf("ERROR: could not open save file %s, 'fread()' failed.\n", filePath) ;
         return ERROR ;
     }
-    if (spChessLoad(game, filePath)==SP_CHESS_GAME_ILLEGAL_PATH){
+    if (ret==SP_CHESS_GAME_ILLEGAL_PATH){
         printf("ERROR: could not open save file %s, Illegal path.\n", filePath) ;
         return ERROR ;
     }
+
     return RELOAD_GAME ;
 }
 

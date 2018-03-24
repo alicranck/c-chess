@@ -21,7 +21,6 @@ int consoleMain(){
             if (game->gameMode==2||game->userColor==currentColor) {
                 if (print_flag)
                     spChessPrintBoard(game);
-                print_flag = false;
                 cmd = getMoveFromUser(
                         game); //Assumes cmd is not NULL. allocation and IO errors are handled in the function
                 ret = executeUserCommand(cmd, game); //ret options - (1=quit, 2=restart, 3=print status and repeat user turn,
@@ -80,5 +79,4 @@ int consoleMain(){
     }
     return 0 ;
 }
-#pragma clang diagnostic pop
 

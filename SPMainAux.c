@@ -51,12 +51,12 @@ SPChessGame* startNewGame(){
                     break ;
                 }
                 msg = spChessLoad(game, cmd->filePath) ;
-                if (msg==STANDART_ERROR){
+                if (msg==SP_CHESS_GAME_STANDART_ERROR){
                     printError(STANDART_ERROR, "fread()") ;
                     spChessDestroy(game) ;
                     break ;
                 }
-                if (msg==ILLEGAL_PATH){
+                if (msg==SP_CHESS_GAME_ILLEGAL_PATH){
                     printError(ILLEGAL_PATH, NULL) ;
                     spChessDestroy(game) ;
                     break ;

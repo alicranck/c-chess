@@ -6,13 +6,14 @@
 #include "SPGUISettingsScreen.h"
 #include "SPGUIGameScreen.h"
 
-int settings[3] = {1,2,1};
 SPChessGame* game = NULL ;
 
 
 int main(int argc, char** argv){
 
     SP_GUI_MESSAGE ret ;
+    int settings[3] = {1,2,1};
+
     // If console mode is chosen, run console mode and return
     if (argc==1||!strcmp(argv[1], "-c")){
         return consoleMain();
@@ -29,7 +30,7 @@ int main(int argc, char** argv){
         // Draw start window
         ret = drawStartWindow() ;
         while (ret!=QUIT){
-            ret = launchScreen(ret) ;
+            ret = launchScreen(ret, settings) ;
         }
         // free everything and finish
         SDL_Quit();
@@ -43,10 +44,14 @@ int main(int argc, char** argv){
  * @param msg an SP_GUI_MESSAGE to indicate the next screen to draw
  * @return a message that represents the next screen, program ends only in case msg==QUIT 
  */
-SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE msg){
+SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE msg, int* settings){
 
-    if(msg==START_NEW_GAME)
+    if(msg==START_NEW_GAME){
+        settings[0] = 1 ;
+        settings[1] = 2 ;
+        settings[2] = 1 ;
         return drawSettingsWindow(settings) ;
+    }
 
     if(msg==MAIN_MENU||msg==BACK||msg==ERROR)
         return drawStartWindow() ;
@@ -61,8 +66,11 @@ SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE msg){
         return drawSaveLoadWindow(game, false);
     }
 
-    if(msg==RELOAD_GAME)
+    if(msg==RELOAD_GAME){
+        if (game==NULL)
+            printf("null game\n") ;
         return drawGameWindow(game) ;
+    }
 
     return ERROR ;
 }

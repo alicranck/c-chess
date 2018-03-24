@@ -219,7 +219,7 @@ Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL
 
     widget->draw = &drawChessSquare ;
     widget->destroy = &destroyChessSquare ;
-    widget->handleEvent = &handleChessSquareEvent ;
+    widget->handleEvent = NULL ;
     widget->data = square ;
 
     return widget ;
@@ -237,17 +237,6 @@ void destroyChessSquare(Widget* src){
     free(square) ;
 }
 
-
-/**
- * a dummy function to handle chess square events. In practice all events are handled by the board
- * in 'SPGUIGameScreen.c'.
- * @param src
- * @param e
- * @return SP_GUI_MESSAGE NONE
- */
-SP_GUI_MESSAGE handleChessSquareEvent(Widget* src, SDL_Event* e) {
-    return NONE ;
-}
 
 
 /**

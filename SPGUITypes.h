@@ -171,16 +171,6 @@ void destroyChessSquare(Widget* src) ;
 
 
 /**
- * a dummy function to handle chess square events. In practice all events are handled by the board
- * in 'SPGUIGameScreen.c'.
- * @param src
- * @param e
- * @return SP_GUI_MESSAGE NONE
- */
-SP_GUI_MESSAGE handleChessSquareEvent(Widget* src, SDL_Event* e) ;
-
-
-/**
  * draw a chess square according to the flags (threatend, capture etc.) in the correct color
  * uses 'SDL_SetTextureColorMod()' to change colors
  * @param src
@@ -212,7 +202,7 @@ void destroyScreen(Screen* screen) ;
  * @param msg an SP_GUI_MESSAGE to indicate the next screen to draw
  * @return a message that represents the next screen, program ends only in case msg==QUIT
  */
-SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE msg) ;
+SP_GUI_MESSAGE launchScreen(SP_GUI_MESSAGE msg, int* settings) ;
 
 
 #endif //SPGUITYPES_H

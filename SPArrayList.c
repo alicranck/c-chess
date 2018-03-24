@@ -3,10 +3,7 @@
 //
 #include <stdbool.h>
 #include <stdio.h>
-#include <ctype.h>
-#include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include "SPArrayList.h"
 /**
  *  Creates an empty array list with the specified maximum capacity.

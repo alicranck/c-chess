@@ -6,9 +6,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include "SPCHESSParser.h"
-#include "SPMainAux.h"
 
 /**
  * Checks if a specified string represents a valid integer. It is recommended
@@ -23,7 +21,7 @@ bool spParserIsInt(const char* str){
     bool flag = true ;
     if (size==0)
         flag = false ;
-    for (int i=0;i<size;i++){
+    for (unsigned int i=0;i<size;i++){
         if (str[i]=='-'&&i!=0)
             flag = false ;
         if (!isdigit(str[i])&&str[i]!='-')

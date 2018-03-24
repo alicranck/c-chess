@@ -7,8 +7,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include "SPChessGame.h"
+#include "SPCHESSGame.h"
 
 /**
  * Creates a new game with a specified settings.
@@ -436,8 +435,8 @@ SP_CHESS_GAME_MESSAGE spChessCheckWinner(SPChessGame* game){
 
     for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
         for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
-            if (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j])||
-                game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j])){
+            if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
+                    (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
                 possibleMoves = spChessGetMoves(game, i, j) ;
                 if (possibleMoves==NULL)
                     return SP_CHESS_GAME_STANDART_ERROR ;

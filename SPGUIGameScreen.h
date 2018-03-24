@@ -15,26 +15,26 @@
 
 
 #define BOARD_Y 50
-#define BOARD_X 506
+#define BOARD_X 280
 
 #define PIECE_HEIGHT 200
 #define PIECE_WIDTH 200
 #define PIECE_GAP 23
 
-#define SQUARE_SIDE 75
+#define SQUARE_SIDE 60
 
 #define UNDO_Y 50
-#define GAME_X 100
-#define GAME_Y 315
+#define GAME_X 70
+#define GAME_Y 200
 
-#define GAME_BUTTON_WIDTH 200
+#define GAME_BUTTON_WIDTH 150
 #define GAME_BUTTON_HEIGHT 50
 #define GAME_VERTICAL_DIFF 70
 
-#define INDICATOR_X 406
+#define INDICATOR_X 240
 #define WHITE_INDICATOR_Y 540
-#define BLACK_INDICATOR_Y 80
-#define INDICATOR_SIDE 70
+#define BLACK_INDICATOR_Y 90
+#define INDICATOR_SIDE 40
 
 #define GAME_NUM_BUTTONS 6
 
@@ -51,7 +51,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game) ;
  * @param game a pointer to an SPChessGame instance to be associated with this board
  * @return a ChessBoard pointer on sucess. NULL on SDL or allocation error
  */
-ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, SPChessGame* game) ;
+ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, SPChessGame* game, SDL_Texture** pieces) ;
 
 
 /**
@@ -75,7 +75,7 @@ void drawBoard(SDL_Renderer* rend, ChessBoard* board) ;
  * @param board the board on which to reassign the pieces
  * @param game the game state to follow
  */
-void redrawBoard(ChessBoard* board, SPChessGame* game) ;
+void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Texture** pieces) ;
 
 
 /**
@@ -94,7 +94,7 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e) ;
  * @param rend
  * @return SP_GUI_MESSAGE NONE on success, ERROR on SDL or allocation error
  */
-SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend) ;
+SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend, SDL_Texture** pieces) ;
 
 
 /**
@@ -102,7 +102,7 @@ SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend) ;
  * @param piece a char representing the piece
  * @return SDL_Texture* to the requested texture
  */
-SDL_Texture* getPieceTex(char piece) ;
+SDL_Texture* getPieceTex(char piece, SDL_Texture** pieces) ;
 
 
 /**
@@ -170,7 +170,7 @@ SP_GUI_MESSAGE finishGUIGame(SDL_Window* window, SPChessGame* game);
 
 void destroyGUIGame(ChessBoard* board);
 
-void destroyPieceTextures();
+void destroyPieceTextures(SDL_Texture** pieces);
 
 void destroyButtons(Widget** buttons, int n);
 

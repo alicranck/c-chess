@@ -3,7 +3,6 @@
 #include "SPCHESSGame.h"
 
 
-#define IGNORE_VAL 214748364
 #define ALLOC_ERROR 7777777
 
 /**
