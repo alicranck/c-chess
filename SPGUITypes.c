@@ -150,7 +150,9 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
  * @param src
  * @param rend
  */
-void drawButton(Widget* src, SDL_Renderer* rend){
+void drawButton(Widget* src, SDL_Renderer* rend, SDL_Texture* sprite){
+    if (sprite!=NULL)
+        return;
 
     Button* button= (Button*)src->data ;
     SDL_SetTextureColorMod(button->texture, 255, 255, 255);
@@ -183,7 +185,7 @@ void drawButton(Widget* src, SDL_Renderer* rend){
  * @param piece the texture of the piece to be located on the square (NULL if no piece)
  * @return Widget* to the square on success. NULL on allocation or SDL error
  */
-Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL_Texture* piece){
+Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL_Rect* piece){
     ChessSquare* square = (ChessSquare*)malloc(sizeof(ChessSquare)) ;
     if (square==NULL)
         return NULL ;
@@ -245,7 +247,7 @@ void destroyChessSquare(Widget* src){
  * @param src
  * @param rend
  */
-void drawChessSquare(Widget* src, SDL_Renderer* rend){
+void drawChessSquare(Widget* src, SDL_Renderer* rend, SDL_Texture* sprite){
     ChessSquare* square = (ChessSquare*)src->data ;
     SDL_SetTextureColorMod(square->texture, 255, 255, 255);
     if (square->hover||square->pressed)
@@ -258,7 +260,9 @@ void drawChessSquare(Widget* src, SDL_Renderer* rend){
         SDL_SetTextureColorMod(square->texture, 255, 0, 0);
 
     SDL_RenderCopy(rend, square->texture, NULL, square->location);
-    SDL_RenderCopy(rend, square->piece, NULL, square->location);
+    if (square->piece==NULL)
+        return;
+    SDL_RenderCopy(rend, sprite, square->piece, square->location);
 }
 
 //------------------------------------------------Window methods-----------------------------------------------

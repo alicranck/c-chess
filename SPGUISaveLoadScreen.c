@@ -35,7 +35,7 @@ SP_GUI_MESSAGE drawSaveLoadWindow(SPChessGame* game, bool save){
 
     // Draw buttons
     for (int i=0; i<SAVE_NUM_BUTTONS; i++){
-        buttons[i]->draw(buttons[i], screen->rend) ;
+        buttons[i]->draw(buttons[i], screen->rend, NULL) ;
     }
 
     // Event loop

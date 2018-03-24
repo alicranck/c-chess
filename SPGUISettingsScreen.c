@@ -37,7 +37,7 @@ SP_GUI_MESSAGE drawSettingsWindow(int* settings){
                 button = (Button*)buttons[i]->data ;
                 button->disabled = false ;
             }
-            buttons[i]->draw(buttons[i], screen->rend) ;
+            buttons[i]->draw(buttons[i], screen->rend, NULL) ;
         }
         SDL_RenderPresent(screen->rend);
         SDL_Event e ;

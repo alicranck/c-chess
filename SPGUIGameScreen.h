@@ -51,7 +51,8 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game) ;
  * @param game a pointer to an SPChessGame instance to be associated with this board
  * @return a ChessBoard pointer on sucess. NULL on SDL or allocation error
  */
-ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, SPChessGame* game, SDL_Texture** pieces) ;
+ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, SPChessGame* game,
+                               SDL_Rect** pieces) ;
 
 
 /**
@@ -67,7 +68,7 @@ Widget** createGameButtons(SDL_Renderer* rend) ;
  * @param rend an SDL_Renderer pointer associated with this window
  * @param board a ChessBoard pointer for the board to draw
  */
-void drawBoard(SDL_Renderer* rend, ChessBoard* board) ;
+void drawBoard(SDL_Renderer* rend, ChessBoard* board, SDL_Texture* sprite) ;
 
 
 /**
@@ -75,7 +76,7 @@ void drawBoard(SDL_Renderer* rend, ChessBoard* board) ;
  * @param board the board on which to reassign the pieces
  * @param game the game state to follow
  */
-void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Texture** pieces) ;
+void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Rect** pieces) ;
 
 
 /**
@@ -89,12 +90,21 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e) ;
 
 
 /**
+ * create an SDL_texture with the game pieces
+ * @param path the path to the pieces image
+ * @param rend an SDL_Renderer
+ * @return an SDL_texture of the pieces
+ */
+SDL_Texture* createPiecesSprite(char* path, SDL_Renderer* rend) ;
+
+
+/**
  * create game piece textures from image
  * @param piecesImg a path to the pieces sprite
  * @param rend
  * @return SP_GUI_MESSAGE NONE on success, ERROR on SDL or allocation error
  */
-SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend, SDL_Texture** pieces) ;
+SP_GUI_MESSAGE createPieceLocations(SDL_Rect** pieces) ;
 
 
 /**
@@ -102,7 +112,7 @@ SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend, SDL_Text
  * @param piece a char representing the piece
  * @return SDL_Texture* to the requested texture
  */
-SDL_Texture* getPieceTex(char piece, SDL_Texture** pieces) ;
+SDL_Rect* getPieceLocation(char piece, SDL_Rect **pieces) ;
 
 
 /**
@@ -170,7 +180,7 @@ SP_GUI_MESSAGE finishGUIGame(SDL_Window* window, SPChessGame* game);
 
 void destroyGUIGame(ChessBoard* board);
 
-void destroyPieceTextures(SDL_Texture** pieces);
+void destroyPieceLocations(SDL_Rect** pieces);
 
 void destroyButtons(Widget** buttons, int n);
 
