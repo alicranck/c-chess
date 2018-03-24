@@ -132,18 +132,19 @@ SPCommand* spParserPraseLine(const char* str) {
                 return NULL;
             t = sscanf(token, " <%d,%c> to <%d,%c> \r\t\n",
                        &(move->sourceRow), &(tmp1), &(move->destRow), &(tmp2));
+            if (t != 4) {
+                ret->cmd = SP_INVALID_LINE;
+                ret->validArg = false;
+                free(move) ;
+                return ret ;
+            }
             move->sourceColumn = tolower(tmp1) - 'a' ;
             move->destColumn = tolower(tmp2) - 'a' ;
             move->sourceRow -= 1 ;
             move->destRow -= 1 ;
-            printf("recieved: <%d,%d> to <%d,%d>\n",
-                   (move->sourceRow), (move->sourceColumn), (move->destRow), (move->destColumn)) ;
             ret->move = move ;
         }
-        if (t != 4) {
-            ret->cmd = SP_INVALID_LINE;
-            ret->validArg = false;
-        }
+
     }
     else if (!strcmp(token, "get_moves")) {
         token = strtok(NULL, "\n");
@@ -155,14 +156,15 @@ SPCommand* spParserPraseLine(const char* str) {
             if (move==NULL)
                 return NULL;
             t = sscanf(token, " <%d,%c> \r\t\n", &(move->sourceRow), &(tmp));
+            if (t != 2) {
+                ret->cmd = SP_INVALID_LINE;
+                ret->validArg = false;
+                free(move) ;
+                return ret ;
+            }
             move->sourceColumn = tolower(tmp) - 'a' ;
             move->sourceRow -= 1 ;
-            printf("recieved: <%d,%d>, t=%d\n", move->sourceRow, move->sourceColumn, t) ;
             ret->move = move ;
-        }
-        if (t != 2) {
-            ret->cmd = SP_INVALID_LINE;
-            ret->validArg = false;
         }
     }
     else if (!strcmp(token, "quit"))

@@ -440,8 +440,10 @@ SP_CHESS_GAME_MESSAGE spChessCheckWinner(SPChessGame* game){
                 possibleMoves = spChessGetMoves(game, i, j) ;
                 if (possibleMoves==NULL)
                     return SP_CHESS_GAME_STANDART_ERROR ;
-                if (possibleMoves->actualSize>0)
+                if (possibleMoves->actualSize>0){
+                    spArrayListDestroy(possibleMoves) ;
                     return SP_CHESS_GAME_NO_WINNER ;
+                }
                 spArrayListDestroy(possibleMoves) ;
             }
         }

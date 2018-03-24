@@ -21,8 +21,7 @@ int consoleMain(){
             if (game->gameMode==2||game->userColor==currentColor) {
                 if (print_flag)
                     spChessPrintBoard(game);
-                cmd = getMoveFromUser(
-                        game); //Assumes cmd is not NULL. allocation and IO errors are handled in the function
+                cmd = getMoveFromUser(game); //Assumes cmd is not NULL. allocation and IO errors are handled in the function
                 ret = executeUserCommand(cmd, game); //ret options - (1=quit, 2=restart, 3=print status and repeat user turn,
                 // 4=execute computer turn, 5=wait for further commands from user)
                 free(cmd);
@@ -34,10 +33,6 @@ int consoleMain(){
             if (ret==2) {
 		        spChessDestroy(game);
                 break;
-            }
-            if (ret==3){
-                print_flag = true ;
-                continue ;
             }
 
             if (ret==5){
@@ -55,6 +50,11 @@ int consoleMain(){
             if (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT){
                 char* player = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? "white" : "black" ;
                 printf("Check: %s king is threatened\n", player) ;
+            }
+
+            if (ret==3){
+                print_flag = true ;
+                continue ;
             }
 
             ret = executeComputerTurn(game) ;

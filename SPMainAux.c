@@ -83,6 +83,7 @@ SPChessGame* startNewGame(){
             case SP_QUIT:
                 if (loaded)
                     spChessDestroy(game) ;
+                free(cmd) ;
                 quit() ;
                 break ;
             case SP_START:
@@ -100,6 +101,7 @@ SPChessGame* startNewGame(){
             default:
                 break ;
         }
+        free(cmd) ;
         if (start)
             break ;
     }
@@ -201,28 +203,36 @@ SPCommand* getCommandFromUser(int game_mode){
 
         if (cmd->cmd == SP_INVALID_LINE){
             printError(INVALID_COMMAND, NULL) ;
+            free(cmd) ;
             continue ;
         }
         if (cmd->cmd == SP_GAME_MODE&&(cmd->arg>2||cmd->arg<1)){
             printError(INVALID_GAME_MODE, NULL) ;
+            free(cmd) ;
             continue ;
         }
         if (cmd->cmd == SP_DIFFICULTY || cmd->cmd == SP_USER_COLOR){
             if (game_mode == 2) {
                 printError(INVALID_COMMAND, NULL);
+                free(cmd) ;
                 continue;
             }
         }
         if (cmd->cmd == SP_DIFFICULTY&&cmd->validArg==false){
             printError(INVALID_DIFFICULTY, NULL) ;
+            free(cmd) ;
             continue ;
         }
         if (cmd->cmd == SP_USER_COLOR&&cmd->validArg==false){
             printError(INVALID_USER_COLOR, NULL) ;
+            free(cmd) ;
             continue ;
         }
+        if (cmd->cmd==SP_GET_MOVES||cmd->cmd==SP_MOVE)
+            free(cmd->move) ;
         if (cmd->cmd==SP_GET_MOVES||cmd->cmd==SP_MOVE||cmd->cmd==SP_SAVE||
                 cmd->cmd==SP_RESTART||cmd->cmd==SP_UNDO_MOVE){
+            free(cmd) ;
             printError(INVALID_COMMAND, NULL) ;
             continue ;
         }
@@ -252,17 +262,21 @@ SPCommand* getMoveFromUser(SPChessGame* game){
         cmd = spParserPraseLine(line) ;
         if (cmd==NULL){
             printError(STANDART_ERROR, "malloc()");
+            free(cmd) ;
             continue ;
         }
 
         if (cmd->cmd == SP_INVALID_LINE){
             printError(INVALID_COMMAND, NULL) ;
+            free(cmd) ;
             continue ;
         }
         if (cmd->cmd == SP_MOVE){
             ERROR ret = checkLegalCommand(game, cmd) ;
             if (ret!=NO_ERROR) {
                 printError(ret, NULL);
+                free(cmd->move) ;
+                free(cmd) ;
                 continue;
             }
         }
@@ -270,16 +284,21 @@ SPCommand* getMoveFromUser(SPChessGame* game){
             ERROR ret = checkLegalCommand(game, cmd) ;
             if (ret==STANDART_ERROR){
                 printError(STANDART_ERROR, "malloc()") ;
+                free(cmd->move) ;
+                free(cmd) ;
                 continue ;
             }
             if (ret!=NO_ERROR) {
                 printError(ret, NULL);
+                free(cmd->move) ;
+                free(cmd) ;
                 continue;
             }
         }
         if (cmd->cmd!=SP_MOVE&&cmd->cmd!=SP_UNDO_MOVE&&cmd->cmd!=SP_SAVE&&
                 cmd->cmd!=SP_GET_MOVES&&cmd->cmd!=SP_RESTART&&cmd->cmd!=SP_QUIT){
             printError(INVALID_COMMAND, NULL) ;
+            free(cmd) ;
             continue ;
         }
         return cmd ;
@@ -467,6 +486,7 @@ int executeComputerTurn(SPChessGame* game){
     printf("Computer: move %s at <%d,%c> to <%d,%c>\n",
            pieceName, move->sourceRow+1, (char)move->sourceColumn+'A', move->destRow+1, (char)move->destColumn+'A') ;
 
+    free(move) ;
     return 0 ;
 }
 
