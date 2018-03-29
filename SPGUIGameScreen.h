@@ -15,23 +15,22 @@
 
 
 #define BOARD_Y 50
-#define BOARD_X 280
+#define BOARD_X 374
 
-#define PIECE_HEIGHT 200
-#define PIECE_WIDTH 200
-#define PIECE_GAP 23
+#define PIECE_HEIGHT 64
+#define PIECE_WIDTH 64
 
-#define SQUARE_SIDE 60
+#define SQUARE_SIDE 75
 
 #define UNDO_Y 50
 #define GAME_X 70
-#define GAME_Y 200
+#define GAME_Y 300
 
-#define GAME_BUTTON_WIDTH 150
+#define GAME_BUTTON_WIDTH 200
 #define GAME_BUTTON_HEIGHT 50
 #define GAME_VERTICAL_DIFF 70
 
-#define INDICATOR_X 240
+#define INDICATOR_X 300
 #define WHITE_INDICATOR_Y 540
 #define BLACK_INDICATOR_Y 90
 #define INDICATOR_SIDE 40

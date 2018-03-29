@@ -16,12 +16,10 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
     Widget** buttons ;
     SDL_Rect* pieces[12] ;
     SDL_Texture* pieces_sprite ;
-    printf("1\n") ;
 
-    Screen* screen = createScreen(800, 600, "bmp/game/bg1.bmp", "game") ;
+    Screen* screen = createScreen(1024, 768, "bmp/game/bg.bmp", "game") ;
     if (screen==NULL)
         return ERROR ;
-    printf("2\n") ;
 
     // create textures for game pieces from image
     ret = createPieceLocations(pieces) ;
@@ -48,7 +46,6 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         destroyScreen(screen) ;
         return ERROR;
     }
-    printf("4\n") ;
 
     // Create buttons
     buttons = createGameButtons(screen->rend) ;
@@ -59,7 +56,6 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         printf("ERROR: unable to create game buttons: %s\n", SDL_GetError());
         return ERROR ;
     }
-    printf("5\n") ;
 
     // Create board
     board = createGUIChessGame(screen->rend, "bmp/game/brightSquare.bmp", "bmp/game/darkSquare.bmp", game, pieces) ;
@@ -71,7 +67,6 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         destroyScreen(screen) ;
         return ERROR ;
     }
-    printf("6\n") ;
 
     // Event loop
     while(1){
@@ -377,6 +372,7 @@ void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Rect** pieces){
     for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
         for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
             square = (ChessSquare*)board->squares[i][j]->data ;
+            square->changed = true ;
             square->piece = getPieceLocation(game->gameBoard[7 - i][j], pieces) ;
         }
     }
@@ -427,8 +423,8 @@ SP_GUI_MESSAGE createPieceLocations(SDL_Rect** pieces){
         SDL_Rect* rect = (SDL_Rect*)malloc(sizeof(SDL_Rect));
         if (rect==NULL)
             return  ERROR ;
-        rect->x = (PIECE_WIDTH+PIECE_GAP)*(i/3) ;
-        rect->y = PIECE_HEIGHT*(i%3) ;
+        rect->x = (PIECE_WIDTH)*(i%6) ;
+        rect->y = PIECE_HEIGHT*(i/6) ;
         rect->h = PIECE_HEIGHT ;
         rect->w = PIECE_WIDTH ;
 
@@ -445,35 +441,32 @@ SP_GUI_MESSAGE createPieceLocations(SDL_Rect** pieces){
  */
 SDL_Rect* getPieceLocation(char piece, SDL_Rect **pieces){
 
-    switch (piece){
+    int black = (isupper(piece)) ? 1 : 0 ;
+    int index = 0 ;
+
+    switch (tolower(piece)){
         case 'k':
-            return pieces[0] ;
-        case 'r':
-            return pieces[1] ;
-        case 'b':
-            return pieces[2] ;
+            index = 0 ;
+            break ;
         case 'q':
-            return pieces[3] ;
+            index = 1 ;
+            break ;
+        case 'r':
+            index = 2 ;
+            break ;
         case 'n':
-            return pieces[4] ;
+            index = 3 ;
+            break ;
+        case 'b':
+            index = 4 ;
+            break ;
         case 'm':
-            return pieces[5] ;
-        case 'Q':
-            return pieces[6] ;
-        case 'N':
-            return pieces[7] ;
-        case 'M':
-            return pieces[8] ;
-        case 'K':
-            return pieces[9] ;
-        case 'R':
-            return pieces[10] ;
-        case 'B':
-            return pieces[11] ;
+            index = 5 ;
+            break ;
         default:
             return NULL ;
     }
-
+    return pieces[index + 6*black] ;
 }
 
 
@@ -504,9 +497,11 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
                 square = (ChessSquare*)board->squares[i][j]->data ;
                 if (SDL_PointInRect(&p, square->location)&&!square->hover&&square->piece!=NULL){
                     square->hover = true ;
+                    square->changed = true ;
                 }
                 if (!SDL_PointInRect(&p, square->location)&&square->hover){
                     square->hover = false ;
+                    square->changed = true ;
                 }
             }
         }
@@ -586,6 +581,7 @@ void clearBoard(ChessBoard* board){
             square->highlighted = false ;
             square->threatend = false ;
             square->capture = false ;
+            square->changed = true ;
         }
     }
     board->pressed = false ;
@@ -600,7 +596,7 @@ void clearBoard(ChessBoard* board){
  */
 SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
 
-    if (spChessCheckLegalMove(board->game, move)!=SP_CHESS_GAME_LEGAL_MOVE)
+    if (spChessCheckLegalMove(board->game, move, board->game->currentPlayer)!=SP_CHESS_GAME_LEGAL_MOVE)
         return ERROR ;
 
     ChessSquare* dest = (ChessSquare*)board->squares[7-move->destRow][move->destColumn]->data ;
@@ -611,6 +607,9 @@ SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
     // move piece texture from source to dest square
     dest->piece = src->piece ;
     src->piece = NULL ;
+
+    dest->changed = true ;
+    src->changed = true ;
 
     return NONE ;
 }
@@ -627,7 +626,7 @@ SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
  */
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col){
 
-    SPArrayList* moves = spChessGetMoves(board->game, 7 - row, col) ;
+    SPArrayList* moves = spChessGetMoves(board->game, 7 - row, col, board->game->currentPlayer) ;
     if (moves==NULL)
         return ERROR ;
 
@@ -646,6 +645,7 @@ SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col){
         move = spArrayListGetAt(moves, i) ;
         square = (ChessSquare*)board->squares[7-move->destRow][move->destColumn]->data ;
         square->highlighted = true ;
+        square->changed = true ;
 
         if (square->piece!=NULL)
             square->capture = true ;

@@ -211,6 +211,7 @@ Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL
     square->capture = false ;
     square->threatend = false ;
     square->highlighted = false ;
+    square->changed = true ;
     square->piece = piece ;
 
     Widget* widget = (Widget*)malloc(sizeof(Widget)) ;
@@ -249,6 +250,9 @@ void destroyChessSquare(Widget* src){
  */
 void drawChessSquare(Widget* src, SDL_Renderer* rend, SDL_Texture* sprite){
     ChessSquare* square = (ChessSquare*)src->data ;
+    if (!square->changed)
+        return ;
+    square->changed = false ;
     SDL_SetTextureColorMod(square->texture, 255, 255, 255);
     if (square->hover||square->pressed)
         SDL_SetTextureColorMod(square->texture, 100, 100, 100);
@@ -305,25 +309,32 @@ Screen* createScreen(int width, int height, char* backgroundImage, char* name){
 
     // ensure renderer supports transparency
     SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
-
-    // set background
-    SDL_Surface* surface = SDL_LoadBMP(backgroundImage) ;
-    if (surface==NULL){
-        printf("ERROR: unable to load %s background image: %s\n", name, SDL_GetError());
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return NULL ;
+    SDL_Texture* texture ;
+    if (backgroundImage!=NULL) {
+        // set background
+        SDL_Surface *surface = SDL_LoadBMP(backgroundImage);
+        if (surface == NULL) {
+            printf("ERROR: unable to load %s background image: %s\n", name, SDL_GetError());
+            SDL_DestroyRenderer(rend);
+            SDL_DestroyWindow(window);
+            return NULL;
+        }
+        texture = SDL_CreateTextureFromSurface(rend, surface);
+        if (texture == NULL) {
+            printf("ERROR: unable to create %s texture from image: %s\n", name, SDL_GetError());
+            SDL_FreeSurface(surface);
+            SDL_DestroyRenderer(rend);
+            SDL_DestroyWindow(window);
+            return NULL;
+        }
+        SDL_FreeSurface(surface);
+        SDL_RenderCopy(rend, texture, NULL, NULL);
     }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
-    if (texture==NULL){
-        printf("ERROR: unable to create %s texture from image: %s\n", name, SDL_GetError());
-        SDL_FreeSurface(surface) ;
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return NULL ;
+    else{
+        SDL_SetRenderDrawColor(rend, 66, 134, 244, 0) ;
+        SDL_RenderClear(rend);
+        texture = NULL ;
     }
-    SDL_FreeSurface(surface) ;
-    SDL_RenderCopy(rend, texture, NULL, NULL);
 
     screen->window = window ;
     screen->rend = rend ;

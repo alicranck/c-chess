@@ -34,6 +34,7 @@ typedef enum {
     INTO_CHECK,
     INVALID_LOCATION ,
     NO_PIECE,
+    EMPTY_PIECE,
     UNDO_ERROR ,
     GAME_OVER ,
     NO_ERROR ,

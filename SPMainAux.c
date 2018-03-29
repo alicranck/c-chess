@@ -57,7 +57,7 @@ SPChessGame* startNewGame(){
                     break ;
                 }
                 if (msg==SP_CHESS_GAME_ILLEGAL_PATH){
-                    printError(ILLEGAL_PATH, NULL) ;
+                    printError(LOAD_ERROR, NULL) ;
                     spChessDestroy(game) ;
                     break ;
                 }
@@ -134,7 +134,7 @@ void printError(ERROR err, char* arg){
 
     switch (err){
         case STANDART_ERROR:
-            printf("Error: %s has failed\n", arg) ;
+            printf("ERROR: %s has failed\n", arg) ;
             break ;
         case INVALID_DIFFICULTY:
             printf("Wrong difficulty level. The value should be between 1 to 5\n") ;
@@ -149,15 +149,19 @@ void printError(ERROR err, char* arg){
             printf("Wrong user color. The value should be 0 or 1\n") ;
             break;
         case LOAD_ERROR:
-            printf("Error: File doesn’t exist or cannot be opened\n") ;
+            printf("ERROR: File doesn’t exist or cannot be opened\n") ;
             break ;
         case ILLEGAL_PATH:
             printf("File cannot be created or modified\n") ;
+            break ;
         case INVALID_LOCATION:
             printf("Invalid position on the board\n") ;
             break;
         case NO_PIECE:
             printf("The specified position does not contain your piece\n") ;
+            break ;
+        case EMPTY_PIECE:
+            printf("The specified position does not contain a player piece\n") ;
             break ;
         case ILLEGAL_MOVE:
             printf("Illegal move\n") ;
@@ -169,13 +173,13 @@ void printError(ERROR err, char* arg){
             printf("Illegal move: king will be threatened\n") ;
             break ;
         case INVALID_COMMAND :
-            printf("Error: invalid command\n") ;
+            printf("ERROR: invalid command\n") ;
             break ;
         case UNDO_ERROR :
-            printf("Error: cannot undo previous move!\n") ;
+            printf("ERROR: cannot undo previous move!\n") ;
             break ;
         case GAME_OVER :
-            printf("Error: the game is over\n") ;
+            printf("ERROR: the game is over\n") ;
             break ;
 	default:
 	    break ;
@@ -321,16 +325,17 @@ ERROR checkLegalCommand(SPChessGame* game, SPCommand* cmd){
     if (cmd->move->sourceRow < 0 || cmd->move->sourceRow > 7 || cmd->move->sourceColumn < 0 ||
         cmd->move->sourceColumn > 7)
         return INVALID_LOCATION;
-    if (piece == SP_CHESS_GAME_EMPTY_ENTRY || (player == SP_CHESS_GAME_WHITE_SYMBOL && isupper(piece)) ||
-        (player == SP_CHESS_GAME_BLACK_SYMBOL && islower(piece)))
-        return NO_PIECE;
+    if (piece == SP_CHESS_GAME_EMPTY_ENTRY)
+        return EMPTY_PIECE;
+    if (((isupper(piece)&&player==SP_CHESS_GAME_WHITE_SYMBOL)||(islower(piece)&&player==SP_CHESS_GAME_BLACK_SYMBOL))&&(cmd->cmd==SP_MOVE))
+        return NO_PIECE ;
     if (cmd->cmd==SP_GET_MOVES)
         return NO_ERROR ;
 
     if(cmd->move->destRow<0||cmd->move->destRow>7||cmd->move->destColumn<0||cmd->move->destColumn>7)
         return INVALID_LOCATION ;
 
-    ret = spChessCheckLegalMove(game, cmd->move) ;
+    ret = spChessCheckLegalMove(game, cmd->move, player) ;
     if (ret==SP_CHESS_GAME_STANDART_ERROR)
         return STANDART_ERROR ;
     if (ret==SP_CHESS_GAME_STILL_CHECK)
@@ -362,9 +367,10 @@ int executeUserCommand(SPCommand* cmd, SPChessGame* game){
     switch(cmd->cmd){
         case SP_QUIT:
             ret = 1 ;
-	        break ;
+            printf("Exiting...\n") ;
+            break ;
         case SP_RESTART:
-            printf("Game restarted!\n") ;
+            printf("Restarting...\n") ;
             ret = 2 ;
 	        break ;
         case SP_SAVE:
@@ -445,8 +451,13 @@ ERROR undoMove(SPChessGame* game){
  */
 ERROR getMoves(SPChessGame* game,int row, int col){
 
-    char player = game->currentPlayer ;
-    SPArrayList* moves = spChessGetMoves(game, row, col) ;
+    char player ;
+    if ((islower(game->gameBoard[row][col])))
+        player = SP_CHESS_GAME_WHITE_SYMBOL ;
+    else
+        player = SP_CHESS_GAME_BLACK_SYMBOL ;
+
+    SPArrayList* moves = spChessGetMoves(game, row, col, player) ;
     if (moves==NULL)
         return STANDART_ERROR ;
 
@@ -555,7 +566,6 @@ char* getPieceString(char piece){
  * terminates the program
  */
 void quit(){
-    printf("Exiting...\n") ;
     exit(0) ;
 }
 

@@ -82,6 +82,7 @@ typedef struct chess_square_t{
     bool pressed ;
     bool threatend ;
     bool capture ;
+    bool changed ;
 }ChessSquare;
 
 
