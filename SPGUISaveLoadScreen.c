@@ -61,10 +61,10 @@ SP_GUI_MESSAGE drawSaveLoadWindow(SPChessGame* game, bool save){
                 ret = loadGUIGame(game, currentSlot) ;
             if (ret==SAVE_GAME)
                 ret = saveGUIGame(game, currentSlot) ;
-            if (ret==QUIT||ret==ERROR||ret==BACK||ret==RELOAD_GAME)
+            if (ret==QUIT||ret==ERROR||ret==BACK||ret==RELOAD_GAME||ret==SAVED)
                 break ;
         }
-        if (ret==QUIT||ret==ERROR||ret==BACK||ret==RELOAD_GAME)
+        if (ret==QUIT||ret==ERROR||ret==BACK||ret==RELOAD_GAME||ret==SAVED)
             break ;
     }
 
@@ -225,7 +225,7 @@ SP_GUI_MESSAGE saveGUIGame(SPChessGame* game, int currentSlot){
         printf("ERROR: could not open save file %s, Illegal path.\n", filePath) ;
         return ERROR ;
     }
-    return BACK ;
+    return SAVED ;
 }
 
 

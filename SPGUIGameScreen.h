@@ -85,7 +85,7 @@ void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Rect** pieces) ;
  * @param e the event
  * @return SP_GUI_MESSAGE NONE on success or ERROR on allocation error
  */
-SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e) ;
+SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e, bool* saved) ;
 
 
 /**
@@ -144,7 +144,7 @@ void drawIndicators(SDL_Renderer* rend, SDL_Texture* tex, SPChessGame* game) ;
  * @param move the move to execute
  * @return SP_GUI_MESSAGE NONE on success. ERROR in case of illegal move
  */
-SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move) ;
+SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move, bool* saved) ;
 
 
 /**
@@ -165,6 +165,15 @@ SP_GUI_MESSAGE undoGUIMove(SPChessGame* game) ;
  * @return ERROR on allocation error, NONE on success
  */
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col) ;
+
+/**
+ * in case of quit/main_menu, present a dialog box for the user to save
+ * @param window
+ * @param game
+ * @param ret - the command to perform next (quit/main)
+ * @return ERROR on SDL error. QUIT/RESTART_GAME/MAIN_MENU according to user selection otherwise
+ */
+SP_GUI_MESSAGE showSaveDialog(SDL_Window* window, SPChessGame* game, SP_GUI_MESSAGE ret, bool* saved);
 
 
 /**

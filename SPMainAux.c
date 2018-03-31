@@ -176,7 +176,7 @@ void printError(ERROR err, char* arg){
             printf("ERROR: invalid command\n") ;
             break ;
         case UNDO_ERROR :
-            printf("ERROR: cannot undo previous move!\n") ;
+            printf("Empty history, no move to undo\n") ;
             break ;
         case GAME_OVER :
             printf("ERROR: the game is over\n") ;

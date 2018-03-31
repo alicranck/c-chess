@@ -15,6 +15,7 @@ typedef enum sp_gui_message_t{
     START_NEW_GAME,
     SAVE_GAME,
     LOAD_GAME,
+    SAVED,
     RELOAD_GAME,
     RESTART_GAME,
     MAIN_MENU,

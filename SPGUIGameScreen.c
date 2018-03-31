@@ -16,6 +16,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
     Widget** buttons ;
     SDL_Rect* pieces[12] ;
     SDL_Texture* pieces_sprite ;
+    bool saved = false ;
 
     Screen* screen = createScreen(1024, 768, "bmp/game/bg.bmp", "game") ;
     if (screen==NULL)
@@ -98,7 +99,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         }
 
         // Seperately handle board and button events
-        ret = handleBoardEvent(board, &e) ;
+        ret = handleBoardEvent(board, &e, &saved) ;
         if (ret==ERROR){
             printf("ERROR: error handling board event\n") ;
             break ;
@@ -107,12 +108,18 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         // Buttons event handling
         for (int i=0; i<GAME_NUM_BUTTONS; i++){
             ret = buttons[i]->handleEvent(buttons[i], &e) ;
-            if (ret==SAVE_GAME)
-                ret = drawSaveLoadWindow(game, true) ;
+            if (ret==SAVE_GAME) {
+                ret = drawSaveLoadWindow(game, true);
+                if (ret==SAVED)
+                    saved = true ;
+            }
             if (ret==LOAD_GAME)
                 ret = drawSaveLoadWindow(game, false) ;
             if (ret==UNDO_MOVE)
                 ret = undoGUIMove(game) ;
+            if ((ret==MAIN_MENU||ret==QUIT)&&saved==false) {
+                ret = showSaveDialog(screen->window, game, ret, &saved);
+            }
             if (ret==QUIT||ret==ERROR||ret==MAIN_MENU||ret==RESTART_GAME||ret==RELOAD_GAME)
                 break ;
         }
@@ -140,7 +147,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
             SPMove* move = spMinimaxSuggestMove(board->game, maxDepth) ;
             if (move==NULL)
                 return ERROR ;
-            executeGUIMove(board, move) ;
+            executeGUIMove(board, move, &saved) ;
             if (spChessCheckWinner(board->game)!=SP_CHESS_GAME_NO_WINNER){
                 ret = finishGUIGame(screen->window, board->game) ;
                 break ;
@@ -477,7 +484,7 @@ SDL_Rect* getPieceLocation(char piece, SDL_Rect **pieces){
  * @param e the event
  * @return SP_GUI_MESSAGE NONE on success or ERROR on allocation error
  */
-SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
+SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e, bool* saved){
     // Check if the event is mouse event, and if it's in the board
     if (e->type!=SDL_MOUSEMOTION&&e->type!=SDL_MOUSEBUTTONDOWN&&e->type!=SDL_MOUSEBUTTONUP)
         return NONE ;
@@ -532,7 +539,7 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e){
             move->sourceColumn = board->pressedLocation[1] ;
             move->destRow = 7 - squareRow ;
             move->destColumn = squareCol ;
-            if(executeGUIMove(board, move)==NONE){
+            if(executeGUIMove(board, move, saved)==NONE){
                 clearBoard(board) ;
                 free(move) ;
                 return NONE ;
@@ -594,7 +601,7 @@ void clearBoard(ChessBoard* board){
  * @param move the move to execute
  * @return SP_GUI_MESSAGE NONE on success. ERROR in case of illegal move
  */
-SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
+SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move, bool* saved){
 
     if (spChessCheckLegalMove(board->game, move, board->game->currentPlayer)!=SP_CHESS_GAME_LEGAL_MOVE)
         return ERROR ;
@@ -610,6 +617,8 @@ SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move){
 
     dest->changed = true ;
     src->changed = true ;
+
+    *saved = false ;
 
     return NONE ;
 }
@@ -657,6 +666,67 @@ SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col){
     }
 
     return NONE ;
+}
+
+
+/**
+ * in case of quit/main_menu, present a dialog box for the user to save
+ * @param window
+ * @param game
+ * @param ret - the command to perform next (quit/main)
+ * @return ERROR on SDL error. QUIT/RESTART_GAME/MAIN_MENU according to user selection otherwise
+ */
+SP_GUI_MESSAGE showSaveDialog(SDL_Window* window, SPChessGame* game, SP_GUI_MESSAGE ret, bool* saved){
+    const SDL_MessageBoxButtonData buttons[] = {
+            { SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Yes" },
+            { 0, 1, "No" },
+            { SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 2, "Cancel" },
+    };
+    const SDL_MessageBoxColorScheme colorScheme = {
+            { /* .colors (.r, .g, .b) */
+                    /* [SDL_MESSAGEBOX_COLOR_BACKGROUND] */
+                    { 255,   0,   0 },
+                    /* [SDL_MESSAGEBOX_COLOR_TEXT] */
+                    {   0, 255,   0 },
+                    /* [SDL_MESSAGEBOX_COLOR_BUTTON_BORDER] */
+                    { 255, 255,   0 },
+                    /* [SDL_MESSAGEBOX_COLOR_BUTTON_BACKGROUND] */
+                    {   0,   0, 255 },
+                    /* [SDL_MESSAGEBOX_COLOR_BUTTON_SELECTED] */
+                    { 255,   0, 255 }
+            }
+    };
+    SDL_MessageBoxData messageboxdata = {
+            SDL_MESSAGEBOX_INFORMATION, /* .flags */
+            window, /* .window */
+            "Save Changes", /* .title */
+            "", /* .message */
+            SDL_arraysize(buttons), /* .numbuttons */
+            buttons, /* .buttons */
+            &colorScheme /* .colorScheme */
+    };
+
+
+    messageboxdata.message = "Would you like to save the current game?" ;
+
+
+    int buttonid;
+    if (SDL_ShowMessageBox(&messageboxdata, &buttonid) < 0) {
+        printf("error displaying message box\n");
+        return ERROR;
+    }
+    if (buttonid==-1||buttonid==1)
+        return ret ;
+    if (buttonid==0) {
+        if (drawSaveLoadWindow(game, true)==SAVED) {
+            *saved = true;
+            return ret;
+        }
+    }
+    if (buttonid==2)
+        return NONE ;
+
+    return NONE;
 }
 
 
