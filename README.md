@@ -1,2 +1,2 @@
-# console-chess
-A simple console chess engine written in c
+# C-Chess
+A simple chess engine written in C, with graphics in SDL2
