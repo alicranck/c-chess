@@ -181,6 +181,9 @@ void printError(ERROR err, char* arg){
         case GAME_OVER :
             printf("ERROR: the game is over\n") ;
             break ;
+        case SAVE_ERROR:
+            printf("ERROR: File cannot be created or modified\n") ;
+            break ;
 	default:
 	    break ;
     }
@@ -383,7 +386,7 @@ int executeUserCommand(SPCommand* cmd, SPChessGame* game){
                 break ;
             }
             if (msg==SP_CHESS_GAME_ILLEGAL_PATH){
-                printError(ILLEGAL_PATH, NULL) ;
+                printError(SAVE_ERROR, NULL) ;
                 err = NO_ERROR ;
                 ret = 5 ;
                 break ;

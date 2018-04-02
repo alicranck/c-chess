@@ -21,6 +21,7 @@
  * a container for all possible errors in a run of SP_CHESS
  */
 typedef enum {
+    SAVE_ERROR,
     ILLEGAL_PATH,
     STANDART_ERROR ,
     INVALID_DIFFICULTY,

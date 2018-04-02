@@ -1,8 +1,9 @@
 //
 // Created by user on 3/10/2018.
 //
-
+#define _BSD_SOURCE
 #include <ctype.h>
+#include <unistd.h>
 #include <SDL_messagebox.h>
 #include "SPGUIGameScreen.h"
 
@@ -89,6 +90,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
 
         // Draw board and present
         drawBoard(screen->rend, board, pieces_sprite) ;
+        usleep(20) ;
         SDL_RenderPresent(screen->rend);
 
         SDL_Event e ;
@@ -132,6 +134,7 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game){
         // redraw all graphics after last turn
         drawBoard(screen->rend, board, pieces_sprite) ;
         drawIndicators(screen->rend, indicator, board->game) ;
+        usleep(20) ;
         SDL_RenderPresent(screen->rend);
 
         // check for mate/draw and finish game if necessary
