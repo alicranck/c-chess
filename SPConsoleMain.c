@@ -2,9 +2,10 @@
 // Created by user on 6/24/2017.
 //
 #include "SPMainAux.h"
-//#include <SDL.h>
+
 
 int consoleMain(){
+    printf(" Chess\n-------\n");
     //----------------------------------------Setting Mode--------------------------------------------
     while(true){
         bool print_flag = false ;
@@ -13,6 +14,7 @@ int consoleMain(){
 	    SP_CHESS_GAME_MESSAGE result ;
 	    SPCommand *cmd  ;
         SPChessGame* game = startNewGame(); //Assumes game is no NULL. allocation errors are handled in the function
+        printf("Starting game...\n") ;
         //----------------------------------------Game Loop--------------------------------------------------
         spChessPrintBoard(game);
         result = SP_CHESS_GAME_NO_WINNER ;

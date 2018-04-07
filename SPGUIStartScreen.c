@@ -24,7 +24,7 @@ SP_GUI_MESSAGE drawStartWindow(){
 
     // Draw buttons
     for (int i=0;i<START_NUM_BUTTONS;i++){
-        buttons[i]->draw(buttons[i], screen->rend) ;
+        buttons[i]->draw(buttons[i], screen->rend, NULL) ;
     }
 
     // Event loop

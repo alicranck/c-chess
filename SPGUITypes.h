@@ -15,6 +15,7 @@ typedef enum sp_gui_message_t{
     START_NEW_GAME,
     SAVE_GAME,
     LOAD_GAME,
+    SAVED,
     RELOAD_GAME,
     RESTART_GAME,
     MAIN_MENU,
@@ -45,7 +46,7 @@ typedef enum sp_gui_message_t{
 typedef struct widget_t Widget ;
 
 struct widget_t{
-    void (*draw)(Widget*, SDL_Renderer*) ;
+    void (*draw)(Widget*, SDL_Renderer*, SDL_Texture*) ;
     SP_GUI_MESSAGE (*handleEvent)(Widget*, SDL_Event*) ;
     void (*destroy)(Widget*) ;
     void* data ;
@@ -74,7 +75,7 @@ typedef struct button_t{
  * and flags to establish it's state
  */
 typedef struct chess_square_t{
-    SDL_Texture* piece ;
+    SDL_Rect* piece ;
     SDL_Texture* texture ;
     SDL_Rect* location ;
     bool hover ;
@@ -82,6 +83,7 @@ typedef struct chess_square_t{
     bool pressed ;
     bool threatend ;
     bool capture ;
+    bool changed ;
 }ChessSquare;
 
 
@@ -147,7 +149,7 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) ;
  * @param src
  * @param rend
  */
-void drawButton(Widget* src, SDL_Renderer* rend) ;
+void drawButton(Widget* src, SDL_Renderer* rend, SDL_Texture* sprite) ;
 
 
 //---------------------------------------ChessSquare methods---------------------------------
@@ -160,7 +162,7 @@ void drawButton(Widget* src, SDL_Renderer* rend) ;
  * @param piece the texture of the piece to be located on the square (NULL if no piece)
  * @return Widget* to the square on success. NULL on allocation or SDL error
  */
-Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL_Texture* piece) ;
+Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL_Rect* piece) ;
 
 
 /**
@@ -176,7 +178,7 @@ void destroyChessSquare(Widget* src) ;
  * @param src
  * @param rend
  */
-void drawChessSquare(Widget* src, SDL_Renderer* rend) ;
+void drawChessSquare(Widget* src, SDL_Renderer* rend, SDL_Texture* sprite) ;
 
 
 /**

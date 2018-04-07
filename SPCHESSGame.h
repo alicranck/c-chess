@@ -132,7 +132,7 @@ bool spChessCheckLegalPieceMove(SPChessGame* game, SPMove* move, char player) ;
  *          SP_CHESS_GAME_INTO_CHECK - if the king becomes threatend after the move
  *          SP_CHESS_GAME_LEGAL_MOVE - if the move is legal and the king is not threatend after
  */
-SP_CHESS_GAME_MESSAGE spChessCheckLegalMove(SPChessGame* game, SPMove* move) ;
+SP_CHESS_GAME_MESSAGE spChessCheckLegalMove(SPChessGame* game, SPMove* move, char player) ;
 
 
 /**
@@ -222,7 +222,7 @@ SP_CHESS_GAME_MESSAGE spChessPrintBoard(SPChessGame* src);
  * @return SPArrayList* to a list of all possible moves.
  *          NULL on allocation error
  */
-SPArrayList* spChessGetMoves(SPChessGame* game, int row, int col);
+SPArrayList* spChessGetMoves(SPChessGame* game, int row, int col, char player);
 
 
 /**

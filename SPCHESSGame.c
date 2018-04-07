@@ -157,9 +157,8 @@ bool spChessCheckLegalPieceMove(SPChessGame* game, SPMove* move, char player){
  *          SP_CHESS_GAME_INTO_CHECK - if the king becomes threatend after the move
  *          SP_CHESS_GAME_LEGAL_MOVE - if the move is legal and the king is not threatend after
  */
-SP_CHESS_GAME_MESSAGE spChessCheckLegalMove(SPChessGame* game, SPMove* move){
+SP_CHESS_GAME_MESSAGE spChessCheckLegalMove(SPChessGame* game, SPMove* move,char player){
 
-    char player = game->currentPlayer ;
     SP_CHESS_GAME_MESSAGE checkBefore ;
     SP_CHESS_GAME_MESSAGE checkAfter ;
 
@@ -364,7 +363,7 @@ SP_CHESS_GAME_MESSAGE spChessUndoPrevMove(SPChessGame* game){
  * @return SPArrayList* to a list of all possible moves.
  *          NULL on allocation error
  */
-SPArrayList* spChessGetMoves(SPChessGame* game, int row, int col){
+SPArrayList* spChessGetMoves(SPChessGame* game, int row, int col, char player){
     SPArrayList* list = spArrayListCreate(28) ;  // Max possible moves for any piece is 28
     if (list==NULL)
         return NULL ;
@@ -379,7 +378,7 @@ SPArrayList* spChessGetMoves(SPChessGame* game, int row, int col){
             move->sourceColumn = col ;
             move->destRow = i ;
             move->destColumn = j ;
-            if(spChessCheckLegalMove(game, move)==SP_CHESS_GAME_LEGAL_MOVE)
+            if(spChessCheckLegalMove(game, move, player)==SP_CHESS_GAME_LEGAL_MOVE)
                 spArrayListAddLast(list, move) ;
             else
                 free(move) ;
@@ -413,7 +412,7 @@ SP_CHESS_GAME_MESSAGE spChessPrintBoard(SPChessGame* src){
     }
 
     printf("  -----------------\n") ;
-    printf("   A B C D E F G H  \n") ;
+    printf("   A B C D E F G H\n") ;
 
     return SP_CHESS_GAME_SUCCESS ;
 }
@@ -429,15 +428,15 @@ SP_CHESS_GAME_MESSAGE spChessPrintBoard(SPChessGame* src){
 * SP_CHESS_GAME_NO_WINNER - otherwise
 */
 SP_CHESS_GAME_MESSAGE spChessCheckWinner(SPChessGame* game){
-
+    char player = game->currentPlayer ;
     SPArrayList* possibleMoves ;
-    bool isCheck = (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT) ? true : false ;
+    bool isCheck = (spChessIsCheck(game, player)==SP_CHESS_GAME_UNDER_THREAT) ? true : false ;
 
     for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
         for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
-            if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
-                    (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
-                possibleMoves = spChessGetMoves(game, i, j) ;
+            if ((player==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
+                    (player==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
+                possibleMoves = spChessGetMoves(game, i, j, player) ;
                 if (possibleMoves==NULL)
                     return SP_CHESS_GAME_STANDART_ERROR ;
                 if (possibleMoves->actualSize>0){

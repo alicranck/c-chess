@@ -15,23 +15,22 @@
 
 
 #define BOARD_Y 50
-#define BOARD_X 280
+#define BOARD_X 374
 
-#define PIECE_HEIGHT 200
-#define PIECE_WIDTH 200
-#define PIECE_GAP 23
+#define PIECE_HEIGHT 64
+#define PIECE_WIDTH 64
 
-#define SQUARE_SIDE 60
+#define SQUARE_SIDE 75
 
 #define UNDO_Y 50
 #define GAME_X 70
-#define GAME_Y 200
+#define GAME_Y 300
 
-#define GAME_BUTTON_WIDTH 150
+#define GAME_BUTTON_WIDTH 200
 #define GAME_BUTTON_HEIGHT 50
 #define GAME_VERTICAL_DIFF 70
 
-#define INDICATOR_X 240
+#define INDICATOR_X 300
 #define WHITE_INDICATOR_Y 540
 #define BLACK_INDICATOR_Y 90
 #define INDICATOR_SIDE 40
@@ -51,7 +50,8 @@ SP_GUI_MESSAGE drawGameWindow(SPChessGame* game) ;
  * @param game a pointer to an SPChessGame instance to be associated with this board
  * @return a ChessBoard pointer on sucess. NULL on SDL or allocation error
  */
-ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, SPChessGame* game, SDL_Texture** pieces) ;
+ChessBoard* createGUIChessGame(SDL_Renderer* rend, char* brightSquareImg, char* darkSquareImg, SPChessGame* game,
+                               SDL_Rect** pieces) ;
 
 
 /**
@@ -67,7 +67,7 @@ Widget** createGameButtons(SDL_Renderer* rend) ;
  * @param rend an SDL_Renderer pointer associated with this window
  * @param board a ChessBoard pointer for the board to draw
  */
-void drawBoard(SDL_Renderer* rend, ChessBoard* board) ;
+void drawBoard(SDL_Renderer* rend, ChessBoard* board, SDL_Texture* sprite) ;
 
 
 /**
@@ -75,7 +75,7 @@ void drawBoard(SDL_Renderer* rend, ChessBoard* board) ;
  * @param board the board on which to reassign the pieces
  * @param game the game state to follow
  */
-void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Texture** pieces) ;
+void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Rect** pieces) ;
 
 
 /**
@@ -85,7 +85,16 @@ void redrawBoard(ChessBoard* board, SPChessGame* game, SDL_Texture** pieces) ;
  * @param e the event
  * @return SP_GUI_MESSAGE NONE on success or ERROR on allocation error
  */
-SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e) ;
+SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e, bool* saved) ;
+
+
+/**
+ * create an SDL_texture with the game pieces
+ * @param path the path to the pieces image
+ * @param rend an SDL_Renderer
+ * @return an SDL_texture of the pieces
+ */
+SDL_Texture* createPiecesSprite(char* path, SDL_Renderer* rend) ;
 
 
 /**
@@ -94,7 +103,7 @@ SP_GUI_MESSAGE handleBoardEvent(ChessBoard* board, SDL_Event* e) ;
  * @param rend
  * @return SP_GUI_MESSAGE NONE on success, ERROR on SDL or allocation error
  */
-SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend, SDL_Texture** pieces) ;
+SP_GUI_MESSAGE createPieceLocations(SDL_Rect** pieces) ;
 
 
 /**
@@ -102,7 +111,7 @@ SP_GUI_MESSAGE createPieceTextures(char* piecesImg, SDL_Renderer* rend, SDL_Text
  * @param piece a char representing the piece
  * @return SDL_Texture* to the requested texture
  */
-SDL_Texture* getPieceTex(char piece, SDL_Texture** pieces) ;
+SDL_Rect* getPieceLocation(char piece, SDL_Rect **pieces) ;
 
 
 /**
@@ -135,7 +144,7 @@ void drawIndicators(SDL_Renderer* rend, SDL_Texture* tex, SPChessGame* game) ;
  * @param move the move to execute
  * @return SP_GUI_MESSAGE NONE on success. ERROR in case of illegal move
  */
-SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move) ;
+SP_GUI_MESSAGE executeGUIMove(ChessBoard* board, SPMove* move, bool* saved) ;
 
 
 /**
@@ -157,6 +166,15 @@ SP_GUI_MESSAGE undoGUIMove(SPChessGame* game) ;
  */
 SP_GUI_MESSAGE colorPossibleMoves(ChessBoard* board, int row, int col) ;
 
+/**
+ * in case of quit/main_menu, present a dialog box for the user to save
+ * @param window
+ * @param game
+ * @param ret - the command to perform next (quit/main)
+ * @return ERROR on SDL error. QUIT/RESTART_GAME/MAIN_MENU according to user selection otherwise
+ */
+SP_GUI_MESSAGE showSaveDialog(SDL_Window* window, SPChessGame* game, SP_GUI_MESSAGE ret, bool* saved);
+
 
 /**
  * in case of mate/draw, present a dialog box for the user to determine next step
@@ -170,7 +188,7 @@ SP_GUI_MESSAGE finishGUIGame(SDL_Window* window, SPChessGame* game);
 
 void destroyGUIGame(ChessBoard* board);
 
-void destroyPieceTextures(SDL_Texture** pieces);
+void destroyPieceLocations(SDL_Rect** pieces);
 
 void destroyButtons(Widget** buttons, int n);
 

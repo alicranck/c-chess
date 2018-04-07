@@ -26,14 +26,15 @@
  * move possible, the function returns a '0 move' (all positions are 0)
  */
 SPMove* spMinimaxSuggestMove(SPChessGame* game, int maxDepth){
-
+    
     if (game == NULL||maxDepth<=0)
         return NULL ;
 
+    char player = game->currentPlayer;
     SPMove* move ;
     SPMove* bestMove = (SPMove*)malloc(sizeof(SPMove)) ;
     int score ;
-    int bestScore = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? INT_MIN : INT_MAX ;
+    int bestScore = (player==SP_CHESS_GAME_WHITE_SYMBOL) ? INT_MIN : INT_MAX ;
     int count = 0 ;
     int alpha = INT_MIN ;
     int beta = INT_MAX ;
@@ -44,9 +45,9 @@ SPMove* spMinimaxSuggestMove(SPChessGame* game, int maxDepth){
 
     for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
         for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
-            if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
-                    (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
-                possibleMoves = spChessGetMoves(game, i, j) ;
+            if ((player==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
+                    (player==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
+                possibleMoves = spChessGetMoves(game, i, j, player) ;
                 if (possibleMoves==NULL)
                     return NULL ;
 
@@ -58,16 +59,16 @@ SPMove* spMinimaxSuggestMove(SPChessGame* game, int maxDepth){
                         return NULL;
                     undoTestMove(game, move) ;
 
-                    if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&score>bestScore)||
-                        (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&score<bestScore)){
+                    if ((player==SP_CHESS_GAME_WHITE_SYMBOL&&score>bestScore)||
+                        (player==SP_CHESS_GAME_BLACK_SYMBOL&&score<bestScore)){
                         bestScore = score ;
                         SPMoveCopy(bestMove, move) ;
                     }
 
-                    if (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&bestScore>alpha)
+                    if (player==SP_CHESS_GAME_WHITE_SYMBOL&&bestScore>alpha)
                         alpha = bestScore ;
 
-                    if (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&bestScore<beta)
+                    if (player==SP_CHESS_GAME_BLACK_SYMBOL&&bestScore<beta)
                         beta = bestScore ;
 
                     count++ ;
@@ -97,10 +98,11 @@ SPMove* spMinimaxSuggestMove(SPChessGame* game, int maxDepth){
  */
 int spGetMinimaxScore(SPChessGame* game, int depth, int alpha, int beta){
 
+    char player = game->currentPlayer ;
     if (depth==0)
         return getGameScore(game) ;
 
-    int bestScore = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? INT_MIN : INT_MAX ;
+    int bestScore = (player==SP_CHESS_GAME_WHITE_SYMBOL) ? INT_MIN : INT_MAX ;
     SPArrayList* possibleMoves ;
     SPMove* move ;
     int score ;
@@ -111,9 +113,9 @@ int spGetMinimaxScore(SPChessGame* game, int depth, int alpha, int beta){
     for (int j=0;j<SP_CHESS_GAME_N_COLUMNS;j++){
         for (int i=0;i<SP_CHESS_GAME_N_ROWS;i++){
             // If there is a piece of the current player on the current position, get all possible moves
-            if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
-                    (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
-                possibleMoves = spChessGetMoves(game, i, j) ;
+            if ((player==SP_CHESS_GAME_WHITE_SYMBOL&&islower(game->gameBoard[i][j]))||
+                    (player==SP_CHESS_GAME_BLACK_SYMBOL&&isupper(game->gameBoard[i][j]))){
+                possibleMoves = spChessGetMoves(game, i, j, player) ;
                 if (possibleMoves==NULL)
                     return ALLOC_ERROR ;
 
@@ -128,20 +130,20 @@ int spGetMinimaxScore(SPChessGame* game, int depth, int alpha, int beta){
                     undoTestMove(game, move) ;
 
                     // update min/max score if neccesary
-                    if ((game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL&&score>bestScore)||
-                        (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL&&score<bestScore)){
+                    if ((player==SP_CHESS_GAME_WHITE_SYMBOL&&score>bestScore)||
+                        (player==SP_CHESS_GAME_BLACK_SYMBOL&&score<bestScore)){
                         bestScore = score ;
                     }
 
                     // alpha-beta pruning
-                    if (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL){
+                    if (player==SP_CHESS_GAME_WHITE_SYMBOL){
                         if (bestScore>alpha)
                             alpha = bestScore ;
                         if (beta<alpha)
                             prune = true ;
                     }
 
-                    if (game->currentPlayer==SP_CHESS_GAME_BLACK_SYMBOL){
+                    if (player==SP_CHESS_GAME_BLACK_SYMBOL){
                         if (bestScore<beta)
                             beta = bestScore ;
                         if (beta<alpha)
@@ -161,8 +163,8 @@ int spGetMinimaxScore(SPChessGame* game, int depth, int alpha, int beta){
     }
 
     if (count==0){
-        score = (spChessIsCheck(game, game->currentPlayer)==SP_CHESS_GAME_UNDER_THREAT) ? 1000 : 0 ;
-        int i = (game->currentPlayer==SP_CHESS_GAME_WHITE_SYMBOL) ? 1 : -1 ;
+        score = (spChessIsCheck(game, player)==SP_CHESS_GAME_UNDER_THREAT) ? 1000 : 0 ;
+        int i = (player==SP_CHESS_GAME_WHITE_SYMBOL) ? -1 : 1 ;
         return i*score ;
     }
     return bestScore ;

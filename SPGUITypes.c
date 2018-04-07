@@ -150,7 +150,9 @@ SP_GUI_MESSAGE handleButtonEvent(Widget* src, SDL_Event* e) {
  * @param src
  * @param rend
  */
-void drawButton(Widget* src, SDL_Renderer* rend){
+void drawButton(Widget* src, SDL_Renderer* rend, SDL_Texture* sprite){
+    if (sprite!=NULL)
+        return;
 
     Button* button= (Button*)src->data ;
     SDL_SetTextureColorMod(button->texture, 255, 255, 255);
@@ -183,7 +185,7 @@ void drawButton(Widget* src, SDL_Renderer* rend){
  * @param piece the texture of the piece to be located on the square (NULL if no piece)
  * @return Widget* to the square on success. NULL on allocation or SDL error
  */
-Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL_Texture* piece){
+Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL_Rect* piece){
     ChessSquare* square = (ChessSquare*)malloc(sizeof(ChessSquare)) ;
     if (square==NULL)
         return NULL ;
@@ -209,6 +211,7 @@ Widget* createChessSquare(SDL_Renderer* rend, char* img, SDL_Rect* location, SDL
     square->capture = false ;
     square->threatend = false ;
     square->highlighted = false ;
+    square->changed = true ;
     square->piece = piece ;
 
     Widget* widget = (Widget*)malloc(sizeof(Widget)) ;
@@ -245,8 +248,11 @@ void destroyChessSquare(Widget* src){
  * @param src
  * @param rend
  */
-void drawChessSquare(Widget* src, SDL_Renderer* rend){
+void drawChessSquare(Widget* src, SDL_Renderer* rend, SDL_Texture* sprite){
     ChessSquare* square = (ChessSquare*)src->data ;
+    if (!square->changed)
+        return ;
+    square->changed = false ;
     SDL_SetTextureColorMod(square->texture, 255, 255, 255);
     if (square->hover||square->pressed)
         SDL_SetTextureColorMod(square->texture, 100, 100, 100);
@@ -258,7 +264,9 @@ void drawChessSquare(Widget* src, SDL_Renderer* rend){
         SDL_SetTextureColorMod(square->texture, 255, 0, 0);
 
     SDL_RenderCopy(rend, square->texture, NULL, square->location);
-    SDL_RenderCopy(rend, square->piece, NULL, square->location);
+    if (square->piece==NULL)
+        return;
+    SDL_RenderCopy(rend, sprite, square->piece, square->location);
 }
 
 //------------------------------------------------Window methods-----------------------------------------------
@@ -301,25 +309,32 @@ Screen* createScreen(int width, int height, char* backgroundImage, char* name){
 
     // ensure renderer supports transparency
     SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
-
-    // set background
-    SDL_Surface* surface = SDL_LoadBMP(backgroundImage) ;
-    if (surface==NULL){
-        printf("ERROR: unable to load %s background image: %s\n", name, SDL_GetError());
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return NULL ;
+    SDL_Texture* texture ;
+    if (backgroundImage!=NULL) {
+        // set background
+        SDL_Surface *surface = SDL_LoadBMP(backgroundImage);
+        if (surface == NULL) {
+            printf("ERROR: unable to load %s background image: %s\n", name, SDL_GetError());
+            SDL_DestroyRenderer(rend);
+            SDL_DestroyWindow(window);
+            return NULL;
+        }
+        texture = SDL_CreateTextureFromSurface(rend, surface);
+        if (texture == NULL) {
+            printf("ERROR: unable to create %s texture from image: %s\n", name, SDL_GetError());
+            SDL_FreeSurface(surface);
+            SDL_DestroyRenderer(rend);
+            SDL_DestroyWindow(window);
+            return NULL;
+        }
+        SDL_FreeSurface(surface);
+        SDL_RenderCopy(rend, texture, NULL, NULL);
     }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(rend, surface) ;
-    if (texture==NULL){
-        printf("ERROR: unable to create %s texture from image: %s\n", name, SDL_GetError());
-        SDL_FreeSurface(surface) ;
-        SDL_DestroyRenderer(rend);
-        SDL_DestroyWindow(window);
-        return NULL ;
+    else{
+        SDL_SetRenderDrawColor(rend, 66, 134, 244, 0) ;
+        SDL_RenderClear(rend);
+        texture = NULL ;
     }
-    SDL_FreeSurface(surface) ;
-    SDL_RenderCopy(rend, texture, NULL, NULL);
 
     screen->window = window ;
     screen->rend = rend ;
